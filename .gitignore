@@ -1,0 +1,7 @@
+bin/
+coverage.out
+docs/
+*.exe
+
+# Environment — contains secrets, do not commit
+.env
