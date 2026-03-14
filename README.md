@@ -89,17 +89,24 @@ make lint            # Запустить golangci-lint
 ## База данных
 
 ```bash
-make docker-up       # Запустить контейнер PostgreSQL 16 (порт 5432)
-make docker-down     # Остановить и удалить контейнеры
-make migrate-up      # Применить миграции
-make migrate-down    # Откатить миграции
+make docker-up   # Запустить контейнер PostgreSQL 16 (порт 5432)
+make docker-down # Остановить и удалить контейнеры
+```
+
+Миграции требуют явной передачи строки подключения:
+
+```bash
+make migrate-up   DATABASE_DSN="postgres://user:pass@localhost:5432/dbname?sslmode=disable"
+make migrate-down DATABASE_DSN="postgres://user:pass@localhost:5432/dbname?sslmode=disable"
+```
+
+## Очистка
+
+```bash
+make clean           # Удалить bin/ и coverage.out
 ```
 
 ## Документация API
-
-```bash
-make swag            # Сгенерировать Swagger-документацию в docs/
-```
 
 После запуска сервера Swagger UI доступен по адресу:
 
@@ -152,7 +159,7 @@ cmd/
 internal/
   server/
     handler/          # HTTP-обработчики
-    middleware/        # HTTP-мидлвары (аутентификация, логирование и т.д.)
+    middleware/       # HTTP-мидлвары (аутентификация, логирование и т.д.)
     service/          # Бизнес-логика
     repository/       # Доступ к данным (PostgreSQL)
     model/            # Модели данных сервера

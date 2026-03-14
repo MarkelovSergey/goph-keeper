@@ -1,11 +1,8 @@
 BINARY_SERVER=goph-keeper-server
 BINARY_CLIENT=goph-keeper
 
-# Подгружаем переменные из .env файла, если он существует
--include .env
-export
-
 MODULE=github.com/MarkelovSergey/goph-keeper
+VERSION=0.0.1
 BUILD_DATE=$(shell date -u +"%Y-%m-%dT%H:%M:%SZ")
 LD_FLAGS=-ldflags "-X main.version=$(VERSION) -X main.buildDate=$(BUILD_DATE)"
 
@@ -24,8 +21,8 @@ build-client:
 
 ## Cross-platform builds
 build-all:
-	GOOS=linux   GOARCH=amd64 go build $(LD_FLAGS) -o bin/$(BINARY_CLIENT)-linux-amd64   ./cmd/client/
-	GOOS=darwin  GOARCH=amd64 go build $(LD_FLAGS) -o bin/$(BINARY_CLIENT)-darwin-amd64  ./cmd/client/
+	GOOS=linux   GOARCH=amd64 go build $(LD_FLAGS) -o bin/$(BINARY_CLIENT)-linux-amd64 ./cmd/client/
+	GOOS=darwin  GOARCH=amd64 go build $(LD_FLAGS) -o bin/$(BINARY_CLIENT)-darwin-amd64 ./cmd/client/
 	GOOS=windows GOARCH=amd64 go build $(LD_FLAGS) -o bin/$(BINARY_CLIENT)-windows-amd64.exe ./cmd/client/
 
 ## Test
@@ -39,11 +36,6 @@ test-cover:
 ## Lint
 lint:
 	$(shell go env GOPATH)/bin/golangci-lint run ./...
-
-## Migrations (DATABASE_DSN must be set)
-# .PHONY: install-migrate
-# install-migrate:
-# 	go install -tags 'postgres' github.com/golang-migrate/migrate/v4/cmd/migrate@latest
 
 migrate-up:
 	$(shell go env GOPATH)/bin/migrate -path migrations -database "$(DATABASE_DSN)" up
