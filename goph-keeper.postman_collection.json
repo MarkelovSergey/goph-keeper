@@ -1,0 +1,434 @@
+{
+  "info": {
+    "name": "Goph-Keeper API",
+    "description": "Коллекция запросов для менеджера паролей goph-keeper",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8080",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "credential_id",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Аутентификация",
+      "item": [
+        {
+          "name": "Регистрация",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var json = pm.response.json();",
+                  "if (json.token) {",
+                  "    pm.collectionVariables.set('token', json.token);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"login\": \"user@example.com\",\n  \"password\": \"secret123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/register",
+              "host": ["{{base_url}}"],
+              "path": ["api", "register"]
+            },
+            "description": "Регистрация нового пользователя. Возвращает JWT токен и устанавливает его в переменную коллекции."
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"token\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...\"\n}"
+            },
+            {
+              "name": "400 Bad Request",
+              "status": "Bad Request",
+              "code": 400,
+              "body": ""
+            },
+            {
+              "name": "409 Conflict — пользователь уже существует",
+              "status": "Conflict",
+              "code": 409,
+              "body": ""
+            }
+          ]
+        },
+        {
+          "name": "Вход",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var json = pm.response.json();",
+                  "if (json.token) {",
+                  "    pm.collectionVariables.set('token', json.token);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"login\": \"user@example.com\",\n  \"password\": \"secret123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/login",
+              "host": ["{{base_url}}"],
+              "path": ["api", "login"]
+            },
+            "description": "Вход существующего пользователя. Возвращает JWT токен и устанавливает его в переменную коллекции."
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"token\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...\"\n}"
+            },
+            {
+              "name": "400 Bad Request",
+              "status": "Bad Request",
+              "code": 400,
+              "body": ""
+            },
+            {
+              "name": "401 Unauthorized — неверные учётные данные",
+              "status": "Unauthorized",
+              "code": 401,
+              "body": ""
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Учётные данные",
+      "item": [
+        {
+          "name": "Список учётных данных",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/credentials",
+              "host": ["{{base_url}}"],
+              "path": ["api", "credentials"]
+            },
+            "description": "Получить список всех учётных данных текущего пользователя."
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "body": "[\n  {\n    \"id\": \"550e8400-e29b-41d4-a716-446655440000\",\n    \"user_id\": \"550e8400-e29b-41d4-a716-446655440001\",\n    \"type\": \"login_password\",\n    \"name\": \"GitHub\",\n    \"metadata\": \"github.com\",\n    \"data\": \"base64encoded...\",\n    \"created_at\": \"2026-03-14T12:00:00Z\",\n    \"updated_at\": \"2026-03-14T12:00:00Z\"\n  }\n]"
+            },
+            {
+              "name": "401 Unauthorized",
+              "status": "Unauthorized",
+              "code": 401,
+              "body": ""
+            }
+          ]
+        },
+        {
+          "name": "Создать учётные данные (логин/пароль)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var json = pm.response.json();",
+                  "if (json.id) {",
+                  "    pm.collectionVariables.set('credential_id', json.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"login_password\",\n  \"name\": \"GitHub\",\n  \"metadata\": \"github.com\",\n  \"data\": \"dXNlcjpwYXNzd29yZA==\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/credentials",
+              "host": ["{{base_url}}"],
+              "path": ["api", "credentials"]
+            },
+            "description": "Создать новую запись типа login_password. Поле data — base64-закодированные данные. ID записи сохраняется в переменную credential_id."
+          },
+          "response": [
+            {
+              "name": "201 Created",
+              "status": "Created",
+              "code": 201,
+              "body": "{\n  \"id\": \"550e8400-e29b-41d4-a716-446655440000\",\n  \"user_id\": \"550e8400-e29b-41d4-a716-446655440001\",\n  \"type\": \"login_password\",\n  \"name\": \"GitHub\",\n  \"metadata\": \"github.com\",\n  \"data\": \"dXNlcjpwYXNzd29yZA==\",\n  \"created_at\": \"2026-03-14T12:00:00Z\",\n  \"updated_at\": \"2026-03-14T12:00:00Z\"\n}"
+            },
+            {
+              "name": "400 Bad Request",
+              "status": "Bad Request",
+              "code": 400,
+              "body": ""
+            },
+            {
+              "name": "401 Unauthorized",
+              "status": "Unauthorized",
+              "code": 401,
+              "body": ""
+            }
+          ]
+        },
+        {
+          "name": "Создать учётные данные (текст)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"text\",\n  \"name\": \"Заметка\",\n  \"metadata\": \"личное\",\n  \"data\": \"U2VjcmV0IG5vdGU=\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/credentials",
+              "host": ["{{base_url}}"],
+              "path": ["api", "credentials"]
+            },
+            "description": "Создать новую запись типа text (произвольный текст)."
+          },
+          "response": []
+        },
+        {
+          "name": "Создать учётные данные (банковская карта)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"bank_card\",\n  \"name\": \"Visa\",\n  \"metadata\": \"Сбербанк\",\n  \"data\": \"NDExMSAxMTExIDExMTEgMTExMQ==\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/credentials",
+              "host": ["{{base_url}}"],
+              "path": ["api", "credentials"]
+            },
+            "description": "Создать новую запись типа bank_card (данные банковской карты)."
+          },
+          "response": []
+        },
+        {
+          "name": "Получить учётные данные по ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/credentials/{{credential_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "credentials", "{{credential_id}}"]
+            },
+            "description": "Получить одну запись по UUID. Используется переменная credential_id."
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"id\": \"550e8400-e29b-41d4-a716-446655440000\",\n  \"user_id\": \"550e8400-e29b-41d4-a716-446655440001\",\n  \"type\": \"login_password\",\n  \"name\": \"GitHub\",\n  \"metadata\": \"github.com\",\n  \"data\": \"dXNlcjpwYXNzd29yZA==\",\n  \"created_at\": \"2026-03-14T12:00:00Z\",\n  \"updated_at\": \"2026-03-14T12:00:00Z\"\n}"
+            },
+            {
+              "name": "400 Bad Request — неверный UUID",
+              "status": "Bad Request",
+              "code": 400,
+              "body": ""
+            },
+            {
+              "name": "401 Unauthorized",
+              "status": "Unauthorized",
+              "code": 401,
+              "body": ""
+            },
+            {
+              "name": "404 Not Found",
+              "status": "Not Found",
+              "code": 404,
+              "body": ""
+            }
+          ]
+        },
+        {
+          "name": "Обновить учётные данные",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"GitHub (обновлено)\",\n  \"metadata\": \"github.com\",\n  \"data\": \"bmV3dXNlcjpuZXdwYXNz\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/credentials/{{credential_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "credentials", "{{credential_id}}"]
+            },
+            "description": "Обновить существующую запись по UUID. Изменяет name, metadata и data."
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"id\": \"550e8400-e29b-41d4-a716-446655440000\",\n  \"user_id\": \"550e8400-e29b-41d4-a716-446655440001\",\n  \"type\": \"login_password\",\n  \"name\": \"GitHub (обновлено)\",\n  \"metadata\": \"github.com\",\n  \"data\": \"bmV3dXNlcjpuZXdwYXNz\",\n  \"created_at\": \"2026-03-14T12:00:00Z\",\n  \"updated_at\": \"2026-03-14T13:00:00Z\"\n}"
+            },
+            {
+              "name": "400 Bad Request",
+              "status": "Bad Request",
+              "code": 400,
+              "body": ""
+            },
+            {
+              "name": "401 Unauthorized",
+              "status": "Unauthorized",
+              "code": 401,
+              "body": ""
+            },
+            {
+              "name": "404 Not Found",
+              "status": "Not Found",
+              "code": 404,
+              "body": ""
+            }
+          ]
+        },
+        {
+          "name": "Удалить учётные данные",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/credentials/{{credential_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "credentials", "{{credential_id}}"]
+            },
+            "description": "Удалить запись по UUID. Возвращает 204 No Content при успехе."
+          },
+          "response": [
+            {
+              "name": "204 No Content",
+              "status": "No Content",
+              "code": 204,
+              "body": ""
+            },
+            {
+              "name": "400 Bad Request — неверный UUID",
+              "status": "Bad Request",
+              "code": 400,
+              "body": ""
+            },
+            {
+              "name": "401 Unauthorized",
+              "status": "Unauthorized",
+              "code": 401,
+              "body": ""
+            },
+            {
+              "name": "404 Not Found",
+              "status": "Not Found",
+              "code": 404,
+              "body": ""
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

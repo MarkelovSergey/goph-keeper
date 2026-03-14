@@ -1,6 +1,10 @@
 BINARY_SERVER=goph-keeper-server
 BINARY_CLIENT=goph-keeper
 
+# Подгружаем переменные из .env файла, если он существует
+-include .env
+export
+
 MODULE=github.com/MarkelovSergey/goph-keeper
 VERSION?=0.0.1
 BUILD_DATE=$(shell date -u +"%Y-%m-%dT%H:%M:%SZ")
@@ -38,11 +42,15 @@ lint:
 	golangci-lint run ./...
 
 ## Migrations (DATABASE_DSN must be set)
+.PHONY: install-migrate
+install-migrate:
+	go install -tags 'postgres' github.com/golang-migrate/migrate/v4/cmd/migrate@latest
+
 migrate-up:
-	migrate -path migrations -database "$(DATABASE_DSN)" up
+	$(shell go env GOPATH)/bin/migrate -path migrations -database "$(DATABASE_DSN)" up
 
 migrate-down:
-	migrate -path migrations -database "$(DATABASE_DSN)" down
+	$(shell go env GOPATH)/bin/migrate -path migrations -database "$(DATABASE_DSN)" down
 
 ## Swagger
 swag:

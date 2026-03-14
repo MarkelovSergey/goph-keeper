@@ -3,9 +3,10 @@ package main
 
 import (
 	"fmt"
-	"log"
+	"log/slog"
 	"os"
 
+	"github.com/MarkelovSergey/goph-keeper/internal/server/app"
 	"github.com/MarkelovSergey/goph-keeper/internal/server/config"
 )
 
@@ -23,9 +24,18 @@ func main() {
 
 	cfg, err := config.Load()
 	if err != nil {
-		log.Fatalf("ошибка конфигурации: %v", err)
+		slog.Error("ошибка конфигурации", "error", err)
+		os.Exit(1)
 	}
 
-	log.Printf("Сервер GophKeeper %s запускается на %s", version, cfg.ListenAddr)
-	// TODO: инициализировать приложение и запустить HTTP-сервер (фаза 3+)
+	application, err := app.New(cfg)
+	if err != nil {
+		slog.Error("ошибка инициализации", "error", err)
+		os.Exit(1)
+	}
+
+	if err := application.Start(); err != nil {
+		slog.Error("ошибка выполнения", "error", err)
+		os.Exit(1)
+	}
 }
