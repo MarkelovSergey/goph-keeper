@@ -79,7 +79,7 @@ func newAddCmd() *cobra.Command {
 
 			key := crypto.DeriveKey(password, state.Salt)
 
-			plaintext, cType, err := buildPlaintext(credType, username, password, text, filePath, cardNumber, cardExpiry, cardCVV, cardHolder)
+			plaintext, cType, err := buildPlainText(credType, username, password, text, filePath, cardNumber, cardExpiry, cardCVV, cardHolder)
 			if err != nil {
 				return err
 			}
@@ -118,8 +118,10 @@ func newAddCmd() *cobra.Command {
 	return cmd
 }
 
-// buildPlaintext формирует JSON-данные для шифрования в зависимости от типа.
-func buildPlaintext(credType, username, password, text, filePath, cardNumber, cardExpiry, cardCVV, cardHolder string) ([]byte, model.CredentialType, error) {
+// buildPlainText формирует JSON-данные для шифрования в зависимости от типа.
+func buildPlainText(
+	credType, username, password, text, filePath, cardNumber, cardExpiry, cardCVV, cardHolder string,
+) ([]byte, model.CredentialType, error) {
 	switch model.CredentialType(credType) {
 	case model.CredentialTypeLoginPassword:
 		data := loginPasswordData{Username: username, Password: password}
