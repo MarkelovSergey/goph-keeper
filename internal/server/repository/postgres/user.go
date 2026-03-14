@@ -18,7 +18,7 @@ type userRepo struct {
 
 // NewUserRepository создаёт репозиторий пользователей на основе PostgreSQL.
 func NewUserRepository(db *pgxpool.Pool) repository.UserRepository {
-	return &userRepo{db}
+	return &userRepo{db: db}
 }
 
 func (r *userRepo) Create(ctx context.Context, user *model.User) error {

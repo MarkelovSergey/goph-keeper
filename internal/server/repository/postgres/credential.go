@@ -18,7 +18,7 @@ type credentialRepo struct {
 
 // NewCredentialRepository создаёт репозиторий учётных данных на основе PostgreSQL.
 func NewCredentialRepository(db *pgxpool.Pool) repository.CredentialRepository {
-	return &credentialRepo{db}
+	return &credentialRepo{db: db}
 }
 
 func (r *credentialRepo) Create(ctx context.Context, cred *model.Credential) error {
@@ -57,7 +57,7 @@ func (r *credentialRepo) ListByUserID(ctx context.Context, userID uuid.UUID) ([]
 	}
 	defer rows.Close()
 
-	var creds []*model.Credential
+	creds := make([]*model.Credential, 0)
 	for rows.Next() {
 		cred := &model.Credential{}
 		if err := rows.Scan(

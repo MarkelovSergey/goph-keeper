@@ -21,7 +21,7 @@ type CredentialHandler struct {
 
 // NewCredentialHandler создаёт обработчик учётных данных.
 func NewCredentialHandler(svc *service.CredentialService) *CredentialHandler {
-	return &CredentialHandler{svc}
+	return &CredentialHandler{svc: svc}
 }
 
 type createCredentialRequest struct {
@@ -98,10 +98,6 @@ func (h *CredentialHandler) List(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "внутренняя ошибка сервера", http.StatusInternalServerError)
 		return
 	}
-	if creds == nil {
-		creds = []*model.Credential{}
-	}
-
 	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(creds); err != nil {
 		http.Error(w, "ошибка записи ответа", http.StatusInternalServerError)

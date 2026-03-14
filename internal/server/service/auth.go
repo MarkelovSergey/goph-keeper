@@ -38,9 +38,9 @@ type AuthService struct {
 // NewAuthService создаёт сервис аутентификации.
 func NewAuthService(userRepo repository.UserRepository, jwtSecret string, tokenTTL time.Duration) *AuthService {
 	return &AuthService{
-		userRepo,
-		[]byte(jwtSecret),
-		tokenTTL,
+		userRepo:  userRepo,
+		jwtSecret: []byte(jwtSecret),
+		tokenTTL:  tokenTTL,
 	}
 }
 

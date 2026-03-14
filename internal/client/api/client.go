@@ -16,14 +16,15 @@ import (
 	"github.com/MarkelovSergey/goph-keeper/internal/model"
 )
 
-// ErrUnauthorized возникает при ответе сервера 401.
-var ErrUnauthorized = errors.New("не авторизован")
-
-// ErrNotFound возникает при ответе сервера 404.
-var ErrNotFound = errors.New("запись не найдена")
-
-// ErrConflict возникает при ответе сервера 409 (пользователь уже существует).
-var ErrConflict = errors.New("пользователь уже существует")
+// Ошибки API-клиента.
+var (
+	// ErrUnauthorized возникает при ответе сервера 401.
+	ErrUnauthorized = errors.New("не авторизован")
+	// ErrNotFound возникает при ответе сервера 404.
+	ErrNotFound = errors.New("запись не найдена")
+	// ErrConflict возникает при ответе сервера 409 (пользователь уже существует).
+	ErrConflict = errors.New("пользователь уже существует")
+)
 
 // Client — HTTP-клиент для API сервера GophKeeper.
 type Client struct {
@@ -52,7 +53,7 @@ func (c *Client) SetToken(token string) {
 	c.token = token
 }
 
-// authResponse представляет ответ на запросы регистрации/входа (токен в заголовке).
+// authRequest представляет тело запроса регистрации/входа.
 type authRequest struct {
 	Login    string `json:"login"`
 	Password string `json:"password"`

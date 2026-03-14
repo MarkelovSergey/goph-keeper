@@ -17,7 +17,7 @@ type CredentialService struct {
 
 // NewCredentialService создаёт сервис учётных данных.
 func NewCredentialService(repo repository.CredentialRepository) *CredentialService {
-	return &CredentialService{repo}
+	return &CredentialService{repo: repo}
 }
 
 // Create сохраняет новые учётные данные.

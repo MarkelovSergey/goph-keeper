@@ -16,7 +16,7 @@ type AuthHandler struct {
 
 // NewAuthHandler создаёт обработчик аутентификации.
 func NewAuthHandler(authSvc *service.AuthService) *AuthHandler {
-	return &AuthHandler{authSvc}
+	return &AuthHandler{authSvc: authSvc}
 }
 
 type authRequest struct {

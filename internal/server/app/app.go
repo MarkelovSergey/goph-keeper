@@ -90,9 +90,9 @@ func New(cfg *config.Config) (*App, error) {
 	}
 
 	return &App{
-		cfg,
-		srv,
-		db,
+		cfg:    cfg,
+		server: srv,
+		db:     db,
 	}, nil
 }
 
