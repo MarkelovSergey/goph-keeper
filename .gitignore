@@ -5,3 +5,4 @@ docs/
 
 # Environment — contains secrets, do not commit
 .env
+.claude
