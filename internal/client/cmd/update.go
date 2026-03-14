@@ -16,18 +16,18 @@ import (
 
 func newUpdateCmd() *cobra.Command {
 	var (
-		id         string
-		name       string
-		metadata   string
-		password   string
-		username   string
+		id          string
+		name        string
+		metadata    string
+		password    string
+		username    string
 		newPassword string
-		text       string
-		filePath   string
-		cardNumber string
-		cardExpiry string
-		cardCVV    string
-		cardHolder string
+		text        string
+		filePath    string
+		cardNumber  string
+		cardExpiry  string
+		cardCVV     string
+		cardHolder  string
 	)
 
 	cmd := &cobra.Command{

@@ -15,9 +15,9 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/MarkelovSergey/goph-keeper/internal/model"
-	pgRepo "github.com/MarkelovSergey/goph-keeper/internal/server/repository/postgres"
 	"github.com/MarkelovSergey/goph-keeper/internal/server/handler"
 	"github.com/MarkelovSergey/goph-keeper/internal/server/middleware"
+	pgRepo "github.com/MarkelovSergey/goph-keeper/internal/server/repository/postgres"
 	"github.com/MarkelovSergey/goph-keeper/internal/server/service"
 )
 

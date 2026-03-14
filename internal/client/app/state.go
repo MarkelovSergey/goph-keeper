@@ -70,6 +70,6 @@ func (m *StateManager) RequireToken() (string, error) {
 	if s.Token == "" {
 		return "", ErrNotLoggedIn
 	}
-	
+
 	return s.Token, nil
 }

@@ -11,8 +11,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	pgRepo "github.com/MarkelovSergey/goph-keeper/internal/server/repository/postgres"
 	"github.com/MarkelovSergey/goph-keeper/internal/server/middleware"
+	pgRepo "github.com/MarkelovSergey/goph-keeper/internal/server/repository/postgres"
 	"github.com/MarkelovSergey/goph-keeper/internal/server/service"
 
 	"github.com/MarkelovSergey/goph-keeper/internal/model"

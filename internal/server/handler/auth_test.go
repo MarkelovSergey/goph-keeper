@@ -15,8 +15,8 @@ import (
 	"golang.org/x/crypto/bcrypt"
 
 	"github.com/MarkelovSergey/goph-keeper/internal/model"
-	pgRepo "github.com/MarkelovSergey/goph-keeper/internal/server/repository/postgres"
 	"github.com/MarkelovSergey/goph-keeper/internal/server/handler"
+	pgRepo "github.com/MarkelovSergey/goph-keeper/internal/server/repository/postgres"
 	"github.com/MarkelovSergey/goph-keeper/internal/server/service"
 )
 
