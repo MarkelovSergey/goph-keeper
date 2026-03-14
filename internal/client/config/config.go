@@ -19,15 +19,6 @@ type Config struct {
 	ConfigDir string
 }
 
-// DefaultConfigDir возвращает путь к директории конфигурации клиента по умолчанию.
-func DefaultConfigDir() string {
-	home, err := os.UserHomeDir()
-	if err != nil {
-		return ".gophkeeper"
-	}
-	return home + "/.gophkeeper"
-}
-
 // Load возвращает Config, заполненный из переменных окружения со значениями по умолчанию.
 // Сначала пытается загрузить файл .env из рабочей директории (если он есть).
 // Адрес сервера может быть переопределён позднее через флаги CLI.
@@ -39,13 +30,6 @@ func Load() *Config {
 		TLSInsecure:   os.Getenv("TLS_INSECURE") == "true",
 		ConfigDir:     getEnvOrDefault("GOPHKEEPER_CONFIG_DIR", DefaultConfigDir()),
 	}
-}
-
-func getEnvOrDefault(key, defaultVal string) string {
-	if v := os.Getenv(key); v != "" {
-		return v
-	}
-	return defaultVal
 }
 
 func loadDotEnv() {
@@ -69,4 +53,20 @@ func loadDotEnv() {
 
 		dir = parent
 	}
+}
+
+func getEnvOrDefault(key, defaultVal string) string {
+	if v := os.Getenv(key); v != "" {
+		return v
+	}
+	return defaultVal
+}
+
+// DefaultConfigDir возвращает путь к директории конфигурации клиента по умолчанию.
+func DefaultConfigDir() string {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return ".gophkeeper"
+	}
+	return home + "/.gophkeeper"
 }

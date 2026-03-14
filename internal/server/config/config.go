@@ -50,7 +50,7 @@ func Load() (*Config, error) {
 
 func getEnvOrDefault(key, defaultVal string) string {
 	if v := os.Getenv(key); v != "" {
-		return fmt.Sprintf(":%v", v)
+		return v
 	}
 
 	return defaultVal

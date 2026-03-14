@@ -15,6 +15,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	chiMiddleware "github.com/go-chi/chi/v5/middleware"
 	"github.com/jackc/pgx/v5/pgxpool"
+	httpSwagger "github.com/swaggo/http-swagger"
 
 	"github.com/MarkelovSergey/goph-keeper/internal/server/config"
 	"github.com/MarkelovSergey/goph-keeper/internal/server/handler"
@@ -65,6 +66,8 @@ func New(cfg *config.Config) (*App, error) {
 	r := chi.NewRouter()
 	r.Use(chiMiddleware.Recoverer)
 	r.Use(middleware.Logger)
+
+	r.Get("/swagger/*", httpSwagger.WrapHandler)
 
 	r.Post("/api/register", authHandler.Register)
 	r.Post("/api/login", authHandler.Login)

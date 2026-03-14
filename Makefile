@@ -6,7 +6,6 @@ BINARY_CLIENT=goph-keeper
 export
 
 MODULE=github.com/MarkelovSergey/goph-keeper
-VERSION?=0.0.1
 BUILD_DATE=$(shell date -u +"%Y-%m-%dT%H:%M:%SZ")
 LD_FLAGS=-ldflags "-X main.version=$(VERSION) -X main.buildDate=$(BUILD_DATE)"
 
@@ -39,12 +38,12 @@ test-cover:
 
 ## Lint
 lint:
-	golangci-lint run ./...
+	$(shell go env GOPATH)/bin/golangci-lint run ./...
 
 ## Migrations (DATABASE_DSN must be set)
-.PHONY: install-migrate
-install-migrate:
-	go install -tags 'postgres' github.com/golang-migrate/migrate/v4/cmd/migrate@latest
+# .PHONY: install-migrate
+# install-migrate:
+# 	go install -tags 'postgres' github.com/golang-migrate/migrate/v4/cmd/migrate@latest
 
 migrate-up:
 	$(shell go env GOPATH)/bin/migrate -path migrations -database "$(DATABASE_DSN)" up
@@ -54,14 +53,22 @@ migrate-down:
 
 ## Swagger
 swag:
-	swag init -g cmd/server/main.go -o docs/
+	$(shell go env GOPATH)/bin/swag init -g cmd/server/main.go -o docs/
 
 ## Run
+# Pass extra arguments: make run-server ARGS="..."
 run-server:
-	go run ./cmd/server/
+	go run $(LD_FLAGS) ./cmd/server/ $(ARGS)
+
+# Pass extra arguments: make run-client ARGS="version"
+# Or automatically capture trailing targets: make run-client version
+ifeq (run-client,$(firstword $(MAKECMDGOALS)))
+  RUN_CLIENT_ARGS := $(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))
+  $(eval $(RUN_CLIENT_ARGS):;@:)
+endif
 
 run-client:
-	go run ./cmd/client/
+	go run $(LD_FLAGS) ./cmd/client/ $(RUN_CLIENT_ARGS) $(ARGS)
 
 ## Docker
 docker-up:

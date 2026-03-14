@@ -1,4 +1,15 @@
 // Package main — точка входа сервера GophKeeper.
+//
+// @title       GophKeeper API
+// @version     1.0
+// @description Менеджер паролей и учётных данных
+//
+// @securityDefinitions.apikey BearerAuth
+// @in                         header
+// @name                       Authorization
+//
+// @host     localhost:8080
+// @BasePath /
 package main
 
 import (
@@ -6,6 +17,7 @@ import (
 	"log/slog"
 	"os"
 
+	_ "github.com/MarkelovSergey/goph-keeper/docs"
 	"github.com/MarkelovSergey/goph-keeper/internal/server/app"
 	"github.com/MarkelovSergey/goph-keeper/internal/server/config"
 )

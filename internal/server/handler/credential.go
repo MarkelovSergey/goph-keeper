@@ -73,7 +73,9 @@ func (h *CredentialHandler) Create(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(cred)
+	if err := json.NewEncoder(w).Encode(cred); err != nil {
+		http.Error(w, "ошибка записи ответа", http.StatusInternalServerError)
+	}
 }
 
 // List godoc
@@ -101,7 +103,9 @@ func (h *CredentialHandler) List(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(creds)
+	if err := json.NewEncoder(w).Encode(creds); err != nil {
+		http.Error(w, "ошибка записи ответа", http.StatusInternalServerError)
+	}
 }
 
 // Get godoc
@@ -138,7 +142,9 @@ func (h *CredentialHandler) Get(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(cred)
+	if err := json.NewEncoder(w).Encode(cred); err != nil {
+		http.Error(w, "ошибка записи ответа", http.StatusInternalServerError)
+	}
 }
 
 // Update godoc
@@ -184,7 +190,9 @@ func (h *CredentialHandler) Update(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(cred)
+	if err := json.NewEncoder(w).Encode(cred); err != nil {
+		http.Error(w, "ошибка записи ответа", http.StatusInternalServerError)
+	}
 }
 
 // Delete godoc
