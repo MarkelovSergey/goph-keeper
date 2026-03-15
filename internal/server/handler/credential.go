@@ -97,11 +97,16 @@ func (h *CredentialHandler) Create(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
-	if err := json.NewEncoder(w).Encode(cred); err != nil {
+	data, err := json.Marshal(cred)
+	if err != nil {
 		slog.Error("создание учётных данных: ошибка кодирования ответа", "error", err)
 		http.Error(w, "ошибка записи ответа", http.StatusInternalServerError)
+		return
 	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	w.Write(data)
 }
 
 // List godoc
