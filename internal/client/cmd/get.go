@@ -15,8 +15,8 @@ import (
 
 func (a *App) newGetCmd() *cobra.Command {
 	var (
-		id       string
-		password string
+		id      string
+		decrypt bool
 	)
 
 	cmd := &cobra.Command{
@@ -50,17 +50,21 @@ func (a *App) newGetCmd() *cobra.Command {
 			}
 			fmt.Printf("Создана:  %s\n", cred.CreatedAt.Format("02.01.2006 15:04"))
 
-			if password != "" {
+			if decrypt {
 				state, err := a.stateManager.Load()
 				if err != nil || len(state.Salt) == 0 {
 					return fmt.Errorf("соль не найдена — невозможно расшифровать")
+				}
+				password, err := readMasterPassword()
+				if err != nil {
+					return err
 				}
 				key := crypto.DeriveKey(password, state.Salt)
 				if err := printDecrypted(cred, key); err != nil {
 					return err
 				}
 			} else {
-				fmt.Println("(передайте --password для расшифровки содержимого)")
+				fmt.Println("(передайте --decrypt для расшифровки содержимого)")
 			}
 
 			return nil
@@ -68,7 +72,7 @@ func (a *App) newGetCmd() *cobra.Command {
 	}
 
 	cmd.Flags().StringVar(&id, "id", "", "UUID записи (обязательно)")
-	cmd.Flags().StringVar(&password, "password", "", "мастер-пароль для расшифровки")
+	cmd.Flags().BoolVar(&decrypt, "decrypt", false, "расшифровать содержимое (запросит мастер-пароль)")
 	_ = cmd.MarkFlagRequired("id")
 
 	return cmd

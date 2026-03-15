@@ -35,9 +35,10 @@
                 "login",
                 "--login", "testuser",
                 "--password", "secret123"
-            ]  
+            ]
         },
         {
+            // Мастер-пароль запрашивается интерактивно — запускать через терминал, не через debugger
             "name": "Debug Client: add (login_password)",
             "type": "go",
             "request": "launch",
@@ -47,12 +48,12 @@
                 "add",
                 "--type", "login_password",
                 "--name", "my-site",
-                "--password", "secret123",
                 "--username", "admin",
                 "--meta", "site.ru",
             ]
         },
         {
+            // Мастер-пароль запрашивается интерактивно — запускать через терминал, не через debugger
             "name": "Debug Client: add (text)",
             "type": "go",
             "request": "launch",
@@ -62,7 +63,6 @@
                 "add",
                 "--type", "text",
                 "--name", "my-note",
-                "--password", "secret123",
                 "--text", "secret note content",
                 "--meta", "personal",
             ]
@@ -76,6 +76,7 @@
             "args": ["list"]
         },
         {
+            // Мастер-пароль запрашивается интерактивно — запускать через терминал, не через debugger
             "name": "Debug Client: get",
             "type": "go",
             "request": "launch",
@@ -84,10 +85,11 @@
             "args": [
                 "get",
                 "--id", "16f5bdf1-f017-4116-901b-e5058e6ee48f", // Заменить на актуальный
-                "--password", "secret123"
+                "--decrypt"
             ]
         },
         {
+            // Мастер-пароль запрашивается интерактивно — запускать через терминал, не через debugger
             "name": "Debug Client: update",
             "type": "go",
             "request": "launch",
@@ -96,7 +98,6 @@
             "args": [
                 "update",
                 "--id", "16f5bdf1-f017-4116-901b-e5058e6ee48f", // Заменить на актуальный
-                "--password", "secret123",
                 "--name", "my-site-updated"
             ]
         },

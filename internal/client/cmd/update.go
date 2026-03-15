@@ -19,7 +19,6 @@ func (a *App) newUpdateCmd() *cobra.Command {
 		id          string
 		name        string
 		metadata    string
-		password    string
 		username    string
 		newPassword string
 		text        string
@@ -59,6 +58,12 @@ func (a *App) newUpdateCmd() *cobra.Command {
 			if err != nil || len(state.Salt) == 0 {
 				return fmt.Errorf("соль не найдена — невозможно зашифровать данные")
 			}
+
+			password, err := readMasterPassword()
+			if err != nil {
+				return err
+			}
+
 			key := crypto.DeriveKey(password, state.Salt)
 
 			// Расшифровываем текущие данные для merge
@@ -99,7 +104,6 @@ func (a *App) newUpdateCmd() *cobra.Command {
 	}
 
 	cmd.Flags().StringVar(&id, "id", "", "UUID записи (обязательно)")
-	cmd.Flags().StringVar(&password, "password", "", "мастер-пароль для шифрования (обязательно)")
 	cmd.Flags().StringVar(&name, "name", "", "новое название записи")
 	cmd.Flags().StringVar(&metadata, "meta", "", "новые метаданные")
 	cmd.Flags().StringVar(&username, "username", "", "имя пользователя (для login_password)")
@@ -112,7 +116,6 @@ func (a *App) newUpdateCmd() *cobra.Command {
 	cmd.Flags().StringVar(&cardHolder, "holder", "", "имя держателя (для bank_card)")
 
 	_ = cmd.MarkFlagRequired("id")
-	_ = cmd.MarkFlagRequired("password")
 
 	return cmd
 }

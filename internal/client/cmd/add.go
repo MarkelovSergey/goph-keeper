@@ -41,7 +41,6 @@ func (a *App) newAddCmd() *cobra.Command {
 		credType string
 		name     string
 		metadata string
-		password string
 		// login_password
 		username string
 		// text
@@ -77,6 +76,11 @@ func (a *App) newAddCmd() *cobra.Command {
 				return fmt.Errorf("соль не найдена — зарегистрируйтесь заново или восстановите состояние")
 			}
 
+			password, err := readMasterPassword()
+			if err != nil {
+				return err
+			}
+
 			key := crypto.DeriveKey(password, state.Salt)
 
 			plaintext, cType, err := buildPlainText(credType, username, password, text, filePath, cardNumber, cardExpiry, cardCVV, cardHolder)
@@ -102,7 +106,6 @@ func (a *App) newAddCmd() *cobra.Command {
 	cmd.Flags().StringVar(&credType, "type", "", "тип записи: login_password, text, binary, bank_card (обязательно)")
 	cmd.Flags().StringVar(&name, "name", "", "название записи (обязательно)")
 	cmd.Flags().StringVar(&metadata, "meta", "", "дополнительные метаданные")
-	cmd.Flags().StringVar(&password, "password", "", "мастер-пароль для шифрования (обязательно)")
 	cmd.Flags().StringVar(&username, "username", "", "имя пользователя (для login_password)")
 	cmd.Flags().StringVar(&text, "text", "", "текстовое содержимое (для text)")
 	cmd.Flags().StringVar(&filePath, "file", "", "путь к файлу (для binary)")
@@ -113,7 +116,6 @@ func (a *App) newAddCmd() *cobra.Command {
 
 	_ = cmd.MarkFlagRequired("type")
 	_ = cmd.MarkFlagRequired("name")
-	_ = cmd.MarkFlagRequired("password")
 
 	return cmd
 }

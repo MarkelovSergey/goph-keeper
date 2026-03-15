@@ -31,6 +31,14 @@ func setupApp(t *testing.T, serverURL string, state *app.State) *App {
 	}
 }
 
+// setMasterPassword подменяет readMasterPassword на заглушку для тестов.
+func setMasterPassword(t *testing.T, password string) {
+	t.Helper()
+	orig := readMasterPassword
+	readMasterPassword = func() (string, error) { return password, nil }
+	t.Cleanup(func() { readMasterPassword = orig })
+}
+
 func newSalt(t *testing.T) []byte {
 	t.Helper()
 	salt, err := crypto.GenerateSalt()
@@ -404,7 +412,7 @@ func TestGetCmd(t *testing.T) {
 			errContains: "не найдена",
 		},
 		{
-			name:  "без пароля — подсказка об опции --password",
+			name:  "без пароля — подсказка об опции --decrypt",
 			id:    credBase.ID.String(),
 			state: &app.State{Token: "tok"},
 			serverHandler: func(w http.ResponseWriter, r *http.Request) {
@@ -412,14 +420,14 @@ func TestGetCmd(t *testing.T) {
 			},
 			checkOutput: func(t *testing.T, out string) {
 				assert.Contains(t, out, "заметка")
-				assert.Contains(t, out, "--password")
+				assert.Contains(t, out, "--decrypt")
 			},
 		},
 		{
 			name:  "с расшифровкой",
 			id:    credEncrypted.ID.String(),
 			state: &app.State{Token: "tok", Salt: salt},
-			flags: map[string]string{"password": password},
+			flags: map[string]string{"decrypt": "true", "password": password},
 			serverHandler: func(w http.ResponseWriter, r *http.Request) {
 				writeJSON(w, credEncrypted)
 			},
@@ -453,8 +461,17 @@ func TestGetCmd(t *testing.T) {
 			cmd := a.newGetCmd()
 			cmd.SetContext(context.Background())
 			require.NoError(t, cmd.Flags().Set("id", tc.id))
+
+			masterPass := ""
 			for k, v := range tc.flags {
+				if k == "password" {
+					masterPass = v
+					continue
+				}
 				require.NoError(t, cmd.Flags().Set(k, v))
+			}
+			if masterPass != "" {
+				setMasterPassword(t, masterPass)
 			}
 
 			var err error
@@ -497,39 +514,39 @@ func TestAddCmd(t *testing.T) {
 	}{
 		{
 			name:      "нет токена — ErrNotLoggedIn",
-			flags:     map[string]string{"type": "text", "name": "note", "password": "pass"},
+			flags:     map[string]string{"type": "text", "name": "note"},
 			wantErr:   true,
 			wantErrIs: app.ErrNotLoggedIn,
 		},
 		{
 			name:        "нет соли — ошибка",
 			state:       &app.State{Token: "tok"},
-			flags:       map[string]string{"type": "text", "name": "note", "password": "pass", "text": "данные"},
+			flags:       map[string]string{"type": "text", "name": "note", "text": "данные"},
 			wantErr:     true,
 			errContains: "соль",
 		},
 		{
 			name:         "логин/пароль — успех",
 			state:        &app.State{Token: "tok", Salt: salt},
-			flags:        map[string]string{"type": "login_password", "name": "GitHub", "password": "masterpass", "username": "alice"},
+			flags:        map[string]string{"type": "login_password", "name": "GitHub", "username": "alice"},
 			serverStatus: http.StatusCreated,
 		},
 		{
 			name:         "текст — успех",
 			state:        &app.State{Token: "tok", Salt: salt},
-			flags:        map[string]string{"type": "text", "name": "заметка", "password": "masterpass", "text": "секретный текст"},
+			flags:        map[string]string{"type": "text", "name": "заметка", "text": "секретный текст"},
 			serverStatus: http.StatusCreated,
 		},
 		{
 			name:         "банковская карта — успех",
 			state:        &app.State{Token: "tok", Salt: salt},
-			flags:        map[string]string{"type": "bank_card", "name": "Visa", "password": "masterpass", "number": "4111111111111111", "expiry": "12/26", "cvv": "123", "holder": "Ivan"},
+			flags:        map[string]string{"type": "bank_card", "name": "Visa", "number": "4111111111111111", "expiry": "12/26", "cvv": "123", "holder": "Ivan"},
 			serverStatus: http.StatusCreated,
 		},
 		{
 			name:    "неизвестный тип — ошибка",
 			state:   &app.State{Token: "tok", Salt: salt},
-			flags:   map[string]string{"type": "unknown_type", "name": "test", "password": "masterpass"},
+			flags:   map[string]string{"type": "unknown_type", "name": "test"},
 			wantErr: true,
 		},
 	}
@@ -547,6 +564,7 @@ func TestAddCmd(t *testing.T) {
 				url = srv.URL
 			}
 			a := setupApp(t, url, tc.state)
+			setMasterPassword(t, "masterpass")
 
 			cmd := a.newAddCmd()
 			cmd.SetContext(context.Background())
@@ -594,7 +612,6 @@ func TestUpdateCmd(t *testing.T) {
 		{
 			name:      "нет токена — ErrNotLoggedIn",
 			id:        uuid.New().String(),
-			flags:     map[string]string{"password": "pass"},
 			wantErr:   true,
 			wantErrIs: app.ErrNotLoggedIn,
 		},
@@ -602,14 +619,12 @@ func TestUpdateCmd(t *testing.T) {
 			name:    "невалидный ID — ошибка",
 			id:      "bad-uuid",
 			state:   &app.State{Token: "tok"},
-			flags:   map[string]string{"password": "pass"},
 			wantErr: true,
 		},
 		{
 			name:  "не найдена — ошибка",
 			id:    uuid.New().String(),
 			state: &app.State{Token: "tok", Salt: newSalt(t)},
-			flags: map[string]string{"password": "pass"},
 			serverHandler: func(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(http.StatusNotFound)
 			},
@@ -620,7 +635,7 @@ func TestUpdateCmd(t *testing.T) {
 			name:  "успех",
 			id:    existing.ID.String(),
 			state: &app.State{Token: "tok", Salt: salt},
-			flags: map[string]string{"password": password, "name": "новое имя"},
+			flags: map[string]string{"name": "новое имя"},
 			serverHandler: func(w http.ResponseWriter, r *http.Request) {
 				switch r.Method {
 				case http.MethodGet:
@@ -636,7 +651,6 @@ func TestUpdateCmd(t *testing.T) {
 			name:  "нет соли — ошибка",
 			id:    existing.ID.String(),
 			state: &app.State{Token: "tok"},
-			flags: map[string]string{"password": "pass"},
 			serverHandler: func(w http.ResponseWriter, r *http.Request) {
 				writeJSON(w, existing)
 			},
@@ -654,6 +668,7 @@ func TestUpdateCmd(t *testing.T) {
 				url = srv.URL
 			}
 			a := setupApp(t, url, tc.state)
+			setMasterPassword(t, password)
 
 			cmd := a.newUpdateCmd()
 			cmd.SetContext(context.Background())

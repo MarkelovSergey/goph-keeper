@@ -1,11 +1,13 @@
 package cmd
 
 import (
+	"encoding/base64"
 	"fmt"
 
 	"github.com/spf13/cobra"
 
 	"github.com/MarkelovSergey/goph-keeper/internal/client/app"
+	"github.com/MarkelovSergey/goph-keeper/internal/client/crypto"
 )
 
 func (a *App) newLoginCmd() *cobra.Command {
@@ -26,6 +28,16 @@ func (a *App) newLoginCmd() *cobra.Command {
 				state = &app.State{}
 			}
 			state.Token = token
+
+			// Генерируем соль, если она отсутствует (первый вход без регистрации через CLI)
+			if len(state.Salt) == 0 {
+				salt, err := crypto.GenerateSalt()
+				if err != nil {
+					return fmt.Errorf("генерация соли: %w", err)
+				}
+				state.Salt = salt
+				fmt.Printf("Сгенерирована новая соль: %s\n", base64.StdEncoding.EncodeToString(salt))
+			}
 
 			if err := a.stateManager.Save(state); err != nil {
 				return fmt.Errorf("сохранение состояния: %w", err)
