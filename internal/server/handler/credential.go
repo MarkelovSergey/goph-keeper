@@ -40,6 +40,20 @@ type createCredentialRequest struct {
 	Data     []byte               `json:"data"`
 }
 
+func (r *createCredentialRequest) UnmarshalJSON(b []byte) error {
+	type alias createCredentialRequest
+	var a alias
+	if err := json.Unmarshal(b, &a); err != nil {
+		return err
+	}
+	if a.Type != "" && !a.Type.IsValid() {
+		return errors.New("недопустимый тип учётных данных")
+	}
+
+	*r = createCredentialRequest(a)
+	return nil
+}
+
 type updateCredentialRequest struct {
 	Name     string `json:"name"`
 	Metadata string `json:"metadata"`

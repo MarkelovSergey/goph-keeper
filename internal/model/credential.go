@@ -6,9 +6,6 @@ import (
 	"github.com/google/uuid"
 )
 
-// CredentialType — тип хранимых учётных данных.
-type CredentialType string
-
 const (
 	// CredentialTypeLoginPassword — пара логин/пароль.
 	CredentialTypeLoginPassword CredentialType = "login_password"
@@ -19,6 +16,18 @@ const (
 	// CredentialTypeBankCard — данные банковской карты.
 	CredentialTypeBankCard CredentialType = "bank_card"
 )
+
+// CredentialType — тип хранимых учётных данных.
+type CredentialType string
+
+// IsValid возвращает true, если тип учётных данных является допустимым.
+func (t CredentialType) IsValid() bool {
+	switch t {
+	case CredentialTypeLoginPassword, CredentialTypeText, CredentialTypeBinary, CredentialTypeBankCard:
+		return true
+	}
+	return false
+}
 
 // Credential представляет зашифрованные учётные данные пользователя.
 type Credential struct {
