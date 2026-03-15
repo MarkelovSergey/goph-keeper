@@ -36,7 +36,7 @@ type bankCardData struct {
 	Holder string `json:"holder"`
 }
 
-func newAddCmd() *cobra.Command {
+func (a *App) newAddCmd() *cobra.Command {
 	var (
 		credType string
 		name     string
@@ -66,13 +66,13 @@ func newAddCmd() *cobra.Command {
   gophkeeper add --type binary --name "Файл" --file /path/to/file
   gophkeeper add --type bank_card --name "Visa" --number 4111111111111111 --expiry 12/26 --cvv 123 --holder "Ivan"`,
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			token, err := stateManager.RequireToken()
+			token, err := a.stateManager.RequireToken()
 			if err != nil {
 				return err
 			}
-			apiClient.SetToken(token)
+			a.apiClient.SetToken(token)
 
-			state, err := stateManager.Load()
+			state, err := a.stateManager.Load()
 			if err != nil || len(state.Salt) == 0 {
 				return fmt.Errorf("соль не найдена — зарегистрируйтесь заново или восстановите состояние")
 			}
@@ -89,7 +89,7 @@ func newAddCmd() *cobra.Command {
 				return fmt.Errorf("шифрование: %w", err)
 			}
 
-			cred, err := apiClient.CreateCredential(cmd.Context(), cType, name, metadata, encrypted)
+			cred, err := a.apiClient.CreateCredential(cmd.Context(), cType, name, metadata, encrypted)
 			if err != nil {
 				return fmt.Errorf("создание записи: %w", err)
 			}

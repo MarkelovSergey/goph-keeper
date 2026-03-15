@@ -14,7 +14,7 @@ import (
 	"github.com/MarkelovSergey/goph-keeper/internal/model"
 )
 
-func newUpdateCmd() *cobra.Command {
+func (a *App) newUpdateCmd() *cobra.Command {
 	var (
 		id          string
 		name        string
@@ -34,11 +34,11 @@ func newUpdateCmd() *cobra.Command {
 		Use:   "update",
 		Short: "Обновить существующую запись",
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			token, err := stateManager.RequireToken()
+			token, err := a.stateManager.RequireToken()
 			if err != nil {
 				return err
 			}
-			apiClient.SetToken(token)
+			a.apiClient.SetToken(token)
 
 			credID, err := uuid.Parse(id)
 			if err != nil {
@@ -46,7 +46,7 @@ func newUpdateCmd() *cobra.Command {
 			}
 
 			// Получаем текущую запись
-			existing, err := apiClient.GetCredential(cmd.Context(), credID)
+			existing, err := a.apiClient.GetCredential(cmd.Context(), credID)
 			if errors.Is(err, api.ErrNotFound) {
 				return fmt.Errorf("запись не найдена")
 			}
@@ -55,7 +55,7 @@ func newUpdateCmd() *cobra.Command {
 			}
 
 			// Получаем ключ шифрования
-			state, err := stateManager.Load()
+			state, err := a.stateManager.Load()
 			if err != nil || len(state.Salt) == 0 {
 				return fmt.Errorf("соль не найдена — невозможно зашифровать данные")
 			}
@@ -85,7 +85,7 @@ func newUpdateCmd() *cobra.Command {
 				metadata = existing.Metadata
 			}
 
-			cred, err := apiClient.UpdateCredential(cmd.Context(), credID, name, metadata, encryptedData)
+			cred, err := a.apiClient.UpdateCredential(cmd.Context(), credID, name, metadata, encryptedData)
 			if errors.Is(err, api.ErrNotFound) {
 				return fmt.Errorf("запись не найдена")
 			}

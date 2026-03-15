@@ -18,15 +18,17 @@ import (
 	"github.com/MarkelovSergey/goph-keeper/internal/model"
 )
 
-// setupGlobals инициализирует глобальные переменные пакета для теста.
-func setupGlobals(t *testing.T, serverURL string, state *app.State) {
+// setupApp создаёт App с изолированным StateManager для теста.
+func setupApp(t *testing.T, serverURL string, state *app.State) *App {
 	t.Helper()
 	sm := app.NewStateManager(t.TempDir())
 	if state != nil {
 		require.NoError(t, sm.Save(state))
 	}
-	stateManager = sm
-	apiClient = api.New(serverURL, false)
+	return &App{
+		stateManager: sm,
+		apiClient:    api.New(serverURL, false),
+	}
 }
 
 func newSalt(t *testing.T) []byte {
@@ -66,7 +68,8 @@ func fakeCred(credType model.CredentialType, data []byte) model.Credential {
 // =============================================================================
 
 func TestVersionCmd_Output(t *testing.T) {
-	cmd := newVersionCmd("1.2.3", "2026-03-14")
+	a := &App{version: "1.2.3", buildDate: "2026-03-14"}
+	cmd := a.newVersionCmd()
 	out := captureStdout(t, func() {
 		cmd.Run(cmd, nil)
 	})
@@ -109,9 +112,9 @@ func TestRegisterCmd(t *testing.T) {
 				w.WriteHeader(tc.status)
 			}))
 			defer srv.Close()
-			setupGlobals(t, srv.URL, nil)
+			a := setupApp(t, srv.URL, nil)
 
-			cmd := newRegisterCmd()
+			cmd := a.newRegisterCmd()
 			cmd.SetContext(context.Background())
 			require.NoError(t, cmd.Flags().Set("login", "alice"))
 			require.NoError(t, cmd.Flags().Set("password", "pass"))
@@ -122,7 +125,7 @@ func TestRegisterCmd(t *testing.T) {
 				return
 			}
 			require.NoError(t, err)
-			token, err := stateManager.RequireToken()
+			token, err := a.stateManager.RequireToken()
 			require.NoError(t, err)
 			assert.Equal(t, tc.wantToken, token)
 		})
@@ -164,9 +167,9 @@ func TestLoginCmd(t *testing.T) {
 				w.WriteHeader(tc.status)
 			}))
 			defer srv.Close()
-			setupGlobals(t, srv.URL, &app.State{Salt: newSalt(t)})
+			a := setupApp(t, srv.URL, &app.State{Salt: newSalt(t)})
 
-			cmd := newLoginCmd()
+			cmd := a.newLoginCmd()
 			cmd.SetContext(context.Background())
 			require.NoError(t, cmd.Flags().Set("login", "alice"))
 			require.NoError(t, cmd.Flags().Set("password", "pass"))
@@ -177,7 +180,7 @@ func TestLoginCmd(t *testing.T) {
 				return
 			}
 			require.NoError(t, err)
-			token, err := stateManager.RequireToken()
+			token, err := a.stateManager.RequireToken()
 			require.NoError(t, err)
 			assert.Equal(t, tc.wantToken, token)
 		})
@@ -247,9 +250,9 @@ func TestListCmd(t *testing.T) {
 				defer srv.Close()
 				url = srv.URL
 			}
-			setupGlobals(t, url, tc.state)
+			a := setupApp(t, url, tc.state)
 
-			cmd := newListCmd()
+			cmd := a.newListCmd()
 			cmd.SetContext(context.Background())
 			for k, v := range tc.flags {
 				require.NoError(t, cmd.Flags().Set(k, v))
@@ -329,9 +332,9 @@ func TestDeleteCmd(t *testing.T) {
 				defer srv.Close()
 				url = srv.URL
 			}
-			setupGlobals(t, url, tc.state)
+			a := setupApp(t, url, tc.state)
 
-			cmd := newDeleteCmd()
+			cmd := a.newDeleteCmd()
 			cmd.SetContext(context.Background())
 			require.NoError(t, cmd.Flags().Set("id", tc.id))
 
@@ -445,9 +448,9 @@ func TestGetCmd(t *testing.T) {
 				defer srv.Close()
 				url = srv.URL
 			}
-			setupGlobals(t, url, tc.state)
+			a := setupApp(t, url, tc.state)
 
-			cmd := newGetCmd()
+			cmd := a.newGetCmd()
 			cmd.SetContext(context.Background())
 			require.NoError(t, cmd.Flags().Set("id", tc.id))
 			for k, v := range tc.flags {
@@ -543,9 +546,9 @@ func TestAddCmd(t *testing.T) {
 				defer srv.Close()
 				url = srv.URL
 			}
-			setupGlobals(t, url, tc.state)
+			a := setupApp(t, url, tc.state)
 
-			cmd := newAddCmd()
+			cmd := a.newAddCmd()
 			cmd.SetContext(context.Background())
 			for k, v := range tc.flags {
 				require.NoError(t, cmd.Flags().Set(k, v))
@@ -650,9 +653,9 @@ func TestUpdateCmd(t *testing.T) {
 				defer srv.Close()
 				url = srv.URL
 			}
-			setupGlobals(t, url, tc.state)
+			a := setupApp(t, url, tc.state)
 
-			cmd := newUpdateCmd()
+			cmd := a.newUpdateCmd()
 			cmd.SetContext(context.Background())
 			require.NoError(t, cmd.Flags().Set("id", tc.id))
 			for k, v := range tc.flags {

@@ -13,7 +13,7 @@ import (
 	"github.com/MarkelovSergey/goph-keeper/internal/model"
 )
 
-func newGetCmd() *cobra.Command {
+func (a *App) newGetCmd() *cobra.Command {
 	var (
 		id       string
 		password string
@@ -23,18 +23,18 @@ func newGetCmd() *cobra.Command {
 		Use:   "get",
 		Short: "Получить запись по ID",
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			token, err := stateManager.RequireToken()
+			token, err := a.stateManager.RequireToken()
 			if err != nil {
 				return err
 			}
-			apiClient.SetToken(token)
+			a.apiClient.SetToken(token)
 
 			credID, err := uuid.Parse(id)
 			if err != nil {
 				return fmt.Errorf("неверный формат ID: %w", err)
 			}
 
-			cred, err := apiClient.GetCredential(cmd.Context(), credID)
+			cred, err := a.apiClient.GetCredential(cmd.Context(), credID)
 			if errors.Is(err, api.ErrNotFound) {
 				return fmt.Errorf("запись не найдена")
 			}
@@ -51,7 +51,7 @@ func newGetCmd() *cobra.Command {
 			fmt.Printf("Создана:  %s\n", cred.CreatedAt.Format("02.01.2006 15:04"))
 
 			if password != "" {
-				state, err := stateManager.Load()
+				state, err := a.stateManager.Load()
 				if err != nil || len(state.Salt) == 0 {
 					return fmt.Errorf("соль не найдена — невозможно расшифровать")
 				}

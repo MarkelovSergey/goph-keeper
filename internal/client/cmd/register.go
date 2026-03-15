@@ -10,14 +10,14 @@ import (
 	"github.com/MarkelovSergey/goph-keeper/internal/client/crypto"
 )
 
-func newRegisterCmd() *cobra.Command {
+func (a *App) newRegisterCmd() *cobra.Command {
 	var login, password string
 
 	cmd := &cobra.Command{
 		Use:   "register",
 		Short: "Зарегистрировать нового пользователя",
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			token, err := apiClient.Register(cmd.Context(), login, password)
+			token, err := a.apiClient.Register(cmd.Context(), login, password)
 			if err != nil {
 				return fmt.Errorf("регистрация не удалась: %w", err)
 			}
@@ -28,7 +28,7 @@ func newRegisterCmd() *cobra.Command {
 				return fmt.Errorf("генерация соли: %w", err)
 			}
 
-			if err := stateManager.Save(&app.State{Token: token, Salt: salt}); err != nil {
+			if err := a.stateManager.Save(&app.State{Token: token, Salt: salt}); err != nil {
 				return fmt.Errorf("сохранение состояния: %w", err)
 			}
 

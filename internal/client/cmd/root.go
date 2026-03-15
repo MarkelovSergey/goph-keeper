@@ -9,27 +9,34 @@ import (
 	clientcfg "github.com/MarkelovSergey/goph-keeper/internal/client/config"
 )
 
-var (
+// App содержит зависимости CLI-клиента и используется как ресивер команд.
+type App struct {
+	version      string
+	buildDate    string
 	cfg          *clientcfg.Config
 	stateManager *app.StateManager
 	apiClient    *api.Client
-)
+}
 
 // NewRootCmd создаёт и возвращает корневую команду CLI.
 func NewRootCmd(version, buildDate string) *cobra.Command {
 	var serverAddress string
+	a := &App{
+		version:   version,
+		buildDate: buildDate,
+	}
 
 	root := &cobra.Command{
 		Use:   "gophkeeper",
 		Short: "GophKeeper — менеджер паролей",
 		Long:  "GophKeeper — клиент-серверный менеджер паролей с E2E-шифрованием.",
 		PersistentPreRunE: func(cmd *cobra.Command, _ []string) error {
-			cfg = clientcfg.Load()
+			a.cfg = clientcfg.Load()
 			if serverAddress != "" {
-				cfg.ServerAddress = serverAddress
+				a.cfg.ServerAddress = serverAddress
 			}
-			stateManager = app.NewStateManager(cfg.ConfigDir)
-			apiClient = api.New(cfg.ServerAddress, cfg.TLSInsecure)
+			a.stateManager = app.NewStateManager(a.cfg.ConfigDir)
+			a.apiClient = api.New(a.cfg.ServerAddress, a.cfg.TLSInsecure)
 			return nil
 		},
 		SilenceUsage: true,
@@ -38,14 +45,14 @@ func NewRootCmd(version, buildDate string) *cobra.Command {
 	root.PersistentFlags().StringVar(&serverAddress, "server", "", "адрес сервера (переопределяет SERVER_ADDRESS)")
 
 	root.AddCommand(
-		newRegisterCmd(),
-		newLoginCmd(),
-		newAddCmd(),
-		newListCmd(),
-		newGetCmd(),
-		newUpdateCmd(),
-		newDeleteCmd(),
-		newVersionCmd(version, buildDate),
+		a.newRegisterCmd(),
+		a.newLoginCmd(),
+		a.newAddCmd(),
+		a.newListCmd(),
+		a.newGetCmd(),
+		a.newUpdateCmd(),
+		a.newDeleteCmd(),
+		a.newVersionCmd(),
 	)
 
 	return root

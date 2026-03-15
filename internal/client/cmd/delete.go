@@ -10,25 +10,25 @@ import (
 	"github.com/MarkelovSergey/goph-keeper/internal/client/api"
 )
 
-func newDeleteCmd() *cobra.Command {
+func (a *App) newDeleteCmd() *cobra.Command {
 	var id string
 
 	cmd := &cobra.Command{
 		Use:   "delete",
 		Short: "Удалить запись по ID",
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			token, err := stateManager.RequireToken()
+			token, err := a.stateManager.RequireToken()
 			if err != nil {
 				return err
 			}
-			apiClient.SetToken(token)
+			a.apiClient.SetToken(token)
 
 			credID, err := uuid.Parse(id)
 			if err != nil {
 				return fmt.Errorf("неверный формат ID: %w", err)
 			}
 
-			err = apiClient.DeleteCredential(cmd.Context(), credID)
+			err = a.apiClient.DeleteCredential(cmd.Context(), credID)
 			if errors.Is(err, api.ErrNotFound) {
 				return fmt.Errorf("запись не найдена")
 			}

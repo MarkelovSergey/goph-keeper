@@ -8,20 +8,20 @@ import (
 	"github.com/MarkelovSergey/goph-keeper/internal/model"
 )
 
-func newListCmd() *cobra.Command {
+func (a *App) newListCmd() *cobra.Command {
 	var filterType string
 
 	cmd := &cobra.Command{
 		Use:   "list",
 		Short: "Показать список записей",
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			token, err := stateManager.RequireToken()
+			token, err := a.stateManager.RequireToken()
 			if err != nil {
 				return err
 			}
-			apiClient.SetToken(token)
+			a.apiClient.SetToken(token)
 
-			creds, err := apiClient.ListCredentials(cmd.Context())
+			creds, err := a.apiClient.ListCredentials(cmd.Context())
 			if err != nil {
 				return fmt.Errorf("получение списка: %w", err)
 			}
