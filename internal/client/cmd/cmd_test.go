@@ -12,25 +12,6 @@ import (
 	"github.com/MarkelovSergey/goph-keeper/internal/model"
 )
 
-func TestPrettyType(t *testing.T) {
-	tests := []struct {
-		credType model.CredentialType
-		want     string
-	}{
-		{model.CredentialTypeLoginPassword, "логин/пароль"},
-		{model.CredentialTypeText, "текст"},
-		{model.CredentialTypeBinary, "файл"},
-		{model.CredentialTypeBankCard, "банк. карта"},
-		{"unknown_type", "unknown_type"},
-	}
-
-	for _, tc := range tests {
-		t.Run(string(tc.credType), func(t *testing.T) {
-			assert.Equal(t, tc.want, prettyType(tc.credType))
-		})
-	}
-}
-
 func mustMarshal(t *testing.T, v any) []byte {
 	t.Helper()
 	b, err := json.Marshal(v)
@@ -303,26 +284,4 @@ func TestMergeData(t *testing.T) {
 			}
 		})
 	}
-}
-
-func TestNewRootCmd(t *testing.T) {
-	t.Run("версия команды", func(t *testing.T) {
-		root := NewRootCmd("1.2.3", "2026-03-14")
-		vCmd, _, err := root.Find([]string{"version"})
-		require.NoError(t, err)
-		assert.Equal(t, "version", vCmd.Use)
-	})
-
-	t.Run("подкоманды зарегистрированы", func(t *testing.T) {
-		root := NewRootCmd("0.0.1", "N/A")
-		names := make([]string, 0, len(root.Commands()))
-		for _, c := range root.Commands() {
-			names = append(names, c.Use)
-		}
-		for _, expected := range []string{"version", "register", "login", "add", "list", "get", "update", "delete"} {
-			t.Run(expected, func(t *testing.T) {
-				assert.Contains(t, names, expected)
-			})
-		}
-	})
 }

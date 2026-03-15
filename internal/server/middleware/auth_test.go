@@ -2,6 +2,7 @@ package middleware_test
 
 import (
 	"context"
+	"log/slog"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -106,29 +107,90 @@ func TestGetUserID_NotInContext(t *testing.T) {
 	assert.False(t, ok)
 }
 
-func TestLoggerMiddleware(t *testing.T) {
+// captureHandler перехватывает slog-записи для проверки в тестах.
+type captureHandler struct {
+	records []slog.Record
+}
+
+func (h *captureHandler) Enabled(_ context.Context, _ slog.Level) bool { return true }
+func (h *captureHandler) Handle(_ context.Context, r slog.Record) error {
+	h.records = append(h.records, r)
+	return nil
+}
+func (h *captureHandler) WithAttrs(_ []slog.Attr) slog.Handler { return h }
+func (h *captureHandler) WithGroup(_ string) slog.Handler      { return h }
+
+// attrValue ищет атрибут по ключу в записи slog.
+func attrValue(r slog.Record, key string) (slog.Value, bool) {
+	var found slog.Value
+	var ok bool
+	r.Attrs(func(a slog.Attr) bool {
+		if a.Key == key {
+			found = a.Value
+			ok = true
+			return false
+		}
+		return true
+	})
+	return found, ok
+}
+
+func withCaptureLogger(t *testing.T) *captureHandler {
+	t.Helper()
+	h := &captureHandler{}
+	old := slog.Default()
+	slog.SetDefault(slog.New(h))
+	t.Cleanup(func() { slog.SetDefault(old) })
+	return h
+}
+
+func TestLoggerMiddleware_LogsRequest(t *testing.T) {
+	cap := withCaptureLogger(t)
+
 	next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusCreated)
 	})
 
-	handler := middleware.Logger(next)
-	req := httptest.NewRequest(http.MethodGet, "/test", nil)
-	w := httptest.NewRecorder()
+	middleware.Logger(next).ServeHTTP(
+		httptest.NewRecorder(),
+		httptest.NewRequest(http.MethodPost, "/api/items", nil),
+	)
 
-	handler.ServeHTTP(w, req)
-	assert.Equal(t, http.StatusCreated, w.Code)
+	require.Len(t, cap.records, 1)
+	rec := cap.records[0]
+	assert.Equal(t, "HTTP запрос", rec.Message)
+
+	method, ok := attrValue(rec, "method")
+	require.True(t, ok)
+	assert.Equal(t, http.MethodPost, method.String())
+
+	path, ok := attrValue(rec, "path")
+	require.True(t, ok)
+	assert.Equal(t, "/api/items", path.String())
+
+	status, ok := attrValue(rec, "status")
+	require.True(t, ok)
+	assert.Equal(t, int64(http.StatusCreated), status.Int64())
+
+	_, ok = attrValue(rec, "duration")
+	assert.True(t, ok, "поле duration должно присутствовать в логе")
 }
 
 func TestLoggerMiddleware_DefaultStatus(t *testing.T) {
+	cap := withCaptureLogger(t)
+
 	next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// не вызываем WriteHeader — должен использоваться 200 по умолчанию
 		_, _ = w.Write([]byte("ok"))
 	})
 
-	handler := middleware.Logger(next)
-	req := httptest.NewRequest(http.MethodGet, "/test", nil)
-	w := httptest.NewRecorder()
+	middleware.Logger(next).ServeHTTP(
+		httptest.NewRecorder(),
+		httptest.NewRequest(http.MethodGet, "/health", nil),
+	)
 
-	handler.ServeHTTP(w, req)
-	assert.Equal(t, http.StatusOK, w.Code)
+	require.Len(t, cap.records, 1)
+	status, ok := attrValue(cap.records[0], "status")
+	require.True(t, ok)
+	assert.Equal(t, int64(http.StatusOK), status.Int64())
 }

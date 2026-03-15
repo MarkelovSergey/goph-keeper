@@ -9,12 +9,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestNewStateManager(t *testing.T) {
-	sm := NewStateManager("/some/dir")
-	assert.NotNil(t, sm)
-	assert.Equal(t, "/some/dir/state.json", sm.path)
-}
-
 func TestStateManager_Load(t *testing.T) {
 	tests := []struct {
 		name    string

@@ -77,6 +77,27 @@ func TestDecryptTooShort(t *testing.T) {
 	assert.ErrorIs(t, err, crypto.ErrTooShort)
 }
 
+func TestDeriveKey_CustomParams(t *testing.T) {
+	salt := []byte("testSaltOfLen16B")
+	password := "password"
+
+	defaultKey := crypto.DeriveKey(password, salt, nil)
+
+	customParams := &crypto.ArgonParams{
+		Time:    2,
+		Memory:  32 * 1024,
+		Threads: 2,
+	}
+	customKey := crypto.DeriveKey(password, salt, customParams)
+
+	assert.Len(t, customKey, crypto.KeySize)
+	assert.NotEqual(t, defaultKey, customKey, "кастомные параметры должны давать другой ключ")
+
+	// Повторный вызов с теми же параметрами должен давать тот же ключ
+	customKey2 := crypto.DeriveKey(password, salt, customParams)
+	assert.Equal(t, customKey, customKey2, "одинаковые параметры должны давать одинаковый ключ")
+}
+
 func TestEncryptDecryptEmpty(t *testing.T) {
 	key := crypto.DeriveKey("secret", []byte("saltSaltSaltSalt"), nil)
 	plaintext := []byte{}

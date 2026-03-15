@@ -301,6 +301,33 @@ func TestCredentialHandler_Delete_NoUserID(t *testing.T) {
 	assert.Equal(t, http.StatusUnauthorized, w.Code)
 }
 
+func TestCredentialHandler_Create_InvalidJSON(t *testing.T) {
+	h, _ := newTestCredentialHandler()
+	userID := uuid.New()
+
+	req := httptest.NewRequest(http.MethodPost, "/api/credentials", bytes.NewReader([]byte("not json")))
+	req.Header.Set("Content-Type", "application/json")
+	req = withUserID(req, userID)
+	w := httptest.NewRecorder()
+
+	h.Create(w, req)
+	assert.Equal(t, http.StatusBadRequest, w.Code)
+}
+
+func TestCredentialHandler_Create_InvalidType(t *testing.T) {
+	h, _ := newTestCredentialHandler()
+	userID := uuid.New()
+
+	body, _ := json.Marshal(map[string]any{"type": "invalid_type", "name": "x"})
+	req := httptest.NewRequest(http.MethodPost, "/api/credentials", bytes.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	req = withUserID(req, userID)
+	w := httptest.NewRecorder()
+
+	h.Create(w, req)
+	assert.Equal(t, http.StatusBadRequest, w.Code)
+}
+
 func TestCredentialHandler_Delete_NotFound(t *testing.T) {
 	h, _ := newTestCredentialHandler()
 	userID := uuid.New()

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -144,4 +145,32 @@ func TestAuthHandler_Login_InvalidJSON(t *testing.T) {
 
 	h.Login(w, req)
 	assert.Equal(t, http.StatusBadRequest, w.Code)
+}
+
+// mockAuthService — мок сервиса аутентификации для тестирования ошибок сервиса.
+type mockAuthService struct {
+	registerErr error
+	loginErr    error
+	token       string
+}
+
+func (m *mockAuthService) Register(_ context.Context, _, _ string) (string, error) {
+	return m.token, m.registerErr
+}
+
+func (m *mockAuthService) Login(_ context.Context, _, _ string) (string, error) {
+	return m.token, m.loginErr
+}
+
+func TestAuthHandler_Register_ServiceError(t *testing.T) {
+	svc := &mockAuthService{registerErr: errors.New("внутренняя ошибка БД")}
+	h := handler.NewAuthHandler(svc)
+
+	body, _ := json.Marshal(map[string]string{"login": "user1", "password": "pass123"})
+	req := httptest.NewRequest(http.MethodPost, "/api/register", bytes.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+
+	h.Register(w, req)
+	assert.Equal(t, http.StatusInternalServerError, w.Code)
 }

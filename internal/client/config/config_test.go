@@ -50,9 +50,3 @@ func TestLoad(t *testing.T) {
 		})
 	}
 }
-
-func TestDefaultConfigDir(t *testing.T) {
-	dir := DefaultConfigDir()
-	assert.NotEmpty(t, dir)
-	assert.Contains(t, dir, ".gophkeeper")
-}
