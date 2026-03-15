@@ -35,7 +35,7 @@ func captureStdout(t *testing.T, fn func()) string {
 
 // testKey возвращает фиксированный 32-байтный ключ для тестов.
 func testKey() []byte {
-	return crypto.DeriveKey("test-password", []byte("0123456789abcdef"))
+	return crypto.DeriveKey("test-password", []byte("0123456789abcdef"), nil)
 }
 
 // encrypt шифрует произвольную структуру и возвращает байты.
@@ -58,7 +58,7 @@ func baseCred(credType model.CredentialType, data []byte) *model.Credential {
 }
 
 func TestPrintDecrypted(t *testing.T) {
-	wrongKey := crypto.DeriveKey("wrong-password", []byte("0123456789abcdef"))
+	wrongKey := crypto.DeriveKey("wrong-password", []byte("0123456789abcdef"), nil)
 
 	tests := []struct {
 		name        string

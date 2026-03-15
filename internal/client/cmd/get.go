@@ -59,7 +59,7 @@ func (a *App) newGetCmd() *cobra.Command {
 				if err != nil {
 					return err
 				}
-				key := crypto.DeriveKey(password, state.Salt)
+				key := crypto.DeriveKey(password, state.Salt, state.ArgonParams)
 				if err := printDecrypted(cred, key); err != nil {
 					return err
 				}

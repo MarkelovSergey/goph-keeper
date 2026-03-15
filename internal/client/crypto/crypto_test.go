@@ -24,9 +24,9 @@ func TestGenerateSalt(t *testing.T) {
 
 func TestDeriveKey(t *testing.T) {
 	salt := []byte("testSaltOfLen16B")
-	key1 := crypto.DeriveKey("password", salt)
-	key2 := crypto.DeriveKey("password", salt)
-	key3 := crypto.DeriveKey("other", salt)
+	key1 := crypto.DeriveKey("password", salt, nil)
+	key2 := crypto.DeriveKey("password", salt, nil)
+	key3 := crypto.DeriveKey("other", salt, nil)
 
 	assert.Len(t, key1, crypto.KeySize)
 	assert.Equal(t, key1, key2, "одинаковые входные данные должны давать одинаковый ключ")
@@ -34,7 +34,7 @@ func TestDeriveKey(t *testing.T) {
 }
 
 func TestEncryptDecrypt(t *testing.T) {
-	key := crypto.DeriveKey("secret", []byte("saltSaltSaltSalt"))
+	key := crypto.DeriveKey("secret", []byte("saltSaltSaltSalt"), nil)
 	plaintext := []byte("секретные данные для теста")
 
 	ciphertext, err := crypto.Encrypt(plaintext, key)
@@ -47,7 +47,7 @@ func TestEncryptDecrypt(t *testing.T) {
 }
 
 func TestEncryptProducesUniqueOutput(t *testing.T) {
-	key := crypto.DeriveKey("secret", []byte("saltSaltSaltSalt"))
+	key := crypto.DeriveKey("secret", []byte("saltSaltSaltSalt"), nil)
 	plaintext := []byte("одинаковый текст")
 
 	ct1, err := crypto.Encrypt(plaintext, key)
@@ -61,8 +61,8 @@ func TestEncryptProducesUniqueOutput(t *testing.T) {
 }
 
 func TestDecryptWrongKey(t *testing.T) {
-	key := crypto.DeriveKey("correct", []byte("saltSaltSaltSalt"))
-	wrongKey := crypto.DeriveKey("wrong", []byte("saltSaltSaltSalt"))
+	key := crypto.DeriveKey("correct", []byte("saltSaltSaltSalt"), nil)
+	wrongKey := crypto.DeriveKey("wrong", []byte("saltSaltSaltSalt"), nil)
 
 	ciphertext, err := crypto.Encrypt([]byte("данные"), key)
 	require.NoError(t, err)
@@ -72,13 +72,13 @@ func TestDecryptWrongKey(t *testing.T) {
 }
 
 func TestDecryptTooShort(t *testing.T) {
-	key := crypto.DeriveKey("secret", []byte("saltSaltSaltSalt"))
+	key := crypto.DeriveKey("secret", []byte("saltSaltSaltSalt"), nil)
 	_, err := crypto.Decrypt([]byte("short"), key)
 	assert.ErrorIs(t, err, crypto.ErrTooShort)
 }
 
 func TestEncryptDecryptEmpty(t *testing.T) {
-	key := crypto.DeriveKey("secret", []byte("saltSaltSaltSalt"))
+	key := crypto.DeriveKey("secret", []byte("saltSaltSaltSalt"), nil)
 	plaintext := []byte{}
 
 	ciphertext, err := crypto.Encrypt(plaintext, key)

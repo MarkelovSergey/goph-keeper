@@ -28,7 +28,7 @@ func (a *App) newRegisterCmd() *cobra.Command {
 				return fmt.Errorf("генерация соли: %w", err)
 			}
 
-			if err := a.stateManager.Save(&app.State{Token: token, Salt: salt}); err != nil {
+			if err := a.stateManager.Save(&app.State{Token: token, Salt: salt, ArgonParams: crypto.DefaultArgonParams()}); err != nil {
 				return fmt.Errorf("сохранение состояния: %w", err)
 			}
 

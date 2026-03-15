@@ -64,7 +64,7 @@ func (a *App) newUpdateCmd() *cobra.Command {
 				return err
 			}
 
-			key := crypto.DeriveKey(password, state.Salt)
+			key := crypto.DeriveKey(password, state.Salt, state.ArgonParams)
 
 			// Расшифровываем текущие данные для merge
 			var encryptedData []byte

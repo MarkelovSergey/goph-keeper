@@ -369,7 +369,7 @@ func TestDeleteCmd(t *testing.T) {
 func TestGetCmd(t *testing.T) {
 	salt := newSalt(t)
 	password := "masterpass"
-	key := crypto.DeriveKey(password, salt)
+	key := crypto.DeriveKey(password, salt, nil)
 	encTextData := encryptJSON(t, textData{Text: "секрет"}, key)
 
 	credBase := fakeCred(model.CredentialTypeText, nil)
@@ -595,7 +595,7 @@ func TestAddCmd(t *testing.T) {
 func TestUpdateCmd(t *testing.T) {
 	salt := newSalt(t)
 	password := "masterpass"
-	key := crypto.DeriveKey(password, salt)
+	key := crypto.DeriveKey(password, salt, nil)
 	encData := encryptJSON(t, textData{Text: "старый"}, key)
 	existing := fakeCred(model.CredentialTypeText, encData)
 

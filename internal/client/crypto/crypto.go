@@ -17,15 +17,28 @@ const (
 	KeySize = 32
 	// SaltSize — размер соли для Argon2id.
 	SaltSize = 16
-
-	// Параметры Argon2id.
-	argonTime    = 1
-	argonMemory  = 64 * 1024
-	argonThreads = 4
 )
 
 // ErrTooShort возникает, если шифртекст слишком короток для извлечения nonce.
 var ErrTooShort = errors.New("шифртекст слишком короткий")
+
+// ArgonParams хранит параметры алгоритма Argon2id для вывода ключа.
+// Параметры сохраняются рядом с солью, чтобы расшифровка оставалась
+// возможной при смене значений по умолчанию в будущих версиях.
+type ArgonParams struct {
+	Time    uint32 `json:"time"`
+	Memory  uint32 `json:"memory"`
+	Threads uint8  `json:"threads"`
+}
+
+// DefaultArgonParams возвращает рекомендуемые параметры Argon2id.
+func DefaultArgonParams() *ArgonParams {
+	return &ArgonParams{
+		Time:    1,
+		Memory:  64 * 1024,
+		Threads: 4,
+	}
+}
 
 // GenerateSalt генерирует случайную соль для Argon2id.
 func GenerateSalt() ([]byte, error) {
@@ -37,8 +50,12 @@ func GenerateSalt() ([]byte, error) {
 }
 
 // DeriveKey выводит 32-байтный AES-ключ из пароля и соли с помощью Argon2id.
-func DeriveKey(password string, salt []byte) []byte {
-	return argon2.IDKey([]byte(password), salt, argonTime, argonMemory, argonThreads, KeySize)
+// Если params равен nil, используются параметры по умолчанию.
+func DeriveKey(password string, salt []byte, params *ArgonParams) []byte {
+	if params == nil {
+		params = DefaultArgonParams()
+	}
+	return argon2.IDKey([]byte(password), salt, params.Time, params.Memory, params.Threads, KeySize)
 }
 
 // Encrypt шифрует plaintext ключом key (AES-256-GCM).

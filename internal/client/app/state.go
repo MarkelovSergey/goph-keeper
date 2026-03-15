@@ -6,17 +6,22 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+
+	"github.com/MarkelovSergey/goph-keeper/internal/client/crypto"
 )
 
 // ErrNotLoggedIn возвращается, когда токен отсутствует в состоянии.
 var ErrNotLoggedIn = errors.New("вы не авторизованы — выполните команду 'login'")
 
-// State хранит локальное состояние клиента: JWT-токен и соль для шифрования.
+// State хранит локальное состояние клиента: JWT-токен, соль и параметры KDF.
 type State struct {
 	// Token — JWT-токен авторизованного пользователя.
 	Token string `json:"token"`
-	// Salt — соль (hex) для вывода ключа шифрования через Argon2id.
+	// Salt — соль для вывода ключа шифрования через Argon2id.
 	Salt []byte `json:"salt"`
+	// ArgonParams — параметры Argon2id, сохранённые вместе с солью.
+	// Позволяют расшифровать данные после смены параметров по умолчанию.
+	ArgonParams *crypto.ArgonParams `json:"argon_params,omitempty"`
 }
 
 // StateManager управляет сохранением и загрузкой состояния из файла.

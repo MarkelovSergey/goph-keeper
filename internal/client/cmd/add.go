@@ -81,7 +81,7 @@ func (a *App) newAddCmd() *cobra.Command {
 				return err
 			}
 
-			key := crypto.DeriveKey(password, state.Salt)
+			key := crypto.DeriveKey(password, state.Salt, state.ArgonParams)
 
 			plaintext, cType, err := buildPlainText(credType, username, password, text, filePath, cardNumber, cardExpiry, cardCVV, cardHolder)
 			if err != nil {

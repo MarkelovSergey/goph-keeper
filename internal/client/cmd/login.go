@@ -36,6 +36,7 @@ func (a *App) newLoginCmd() *cobra.Command {
 					return fmt.Errorf("генерация соли: %w", err)
 				}
 				state.Salt = salt
+				state.ArgonParams = crypto.DefaultArgonParams()
 				fmt.Printf("Сгенерирована новая соль: %s\n", base64.StdEncoding.EncodeToString(salt))
 			}
 
