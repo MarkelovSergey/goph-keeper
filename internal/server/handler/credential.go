@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"log/slog"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -90,6 +91,7 @@ func (h *CredentialHandler) Create(w http.ResponseWriter, r *http.Request) {
 
 	cred, err := h.svc.Create(r.Context(), userID, req.Type, req.Name, req.Metadata, req.Data)
 	if err != nil {
+		slog.Error("создание учётных данных: ошибка сервиса", "error", err)
 		http.Error(w, "внутренняя ошибка сервера", http.StatusInternalServerError)
 		return
 	}
@@ -97,6 +99,7 @@ func (h *CredentialHandler) Create(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 	if err := json.NewEncoder(w).Encode(cred); err != nil {
+		slog.Error("создание учётных данных: ошибка кодирования ответа", "error", err)
 		http.Error(w, "ошибка записи ответа", http.StatusInternalServerError)
 	}
 }
@@ -118,11 +121,13 @@ func (h *CredentialHandler) List(w http.ResponseWriter, r *http.Request) {
 
 	creds, err := h.svc.ListByUserID(r.Context(), userID)
 	if err != nil {
+		slog.Error("список учётных данных: ошибка сервиса", "error", err)
 		http.Error(w, "внутренняя ошибка сервера", http.StatusInternalServerError)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(creds); err != nil {
+		slog.Error("список учётных данных: ошибка кодирования ответа", "error", err)
 		http.Error(w, "ошибка записи ответа", http.StatusInternalServerError)
 	}
 }
@@ -156,12 +161,14 @@ func (h *CredentialHandler) Get(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err != nil {
+		slog.Error("получение учётных данных: ошибка сервиса", "error", err)
 		http.Error(w, "внутренняя ошибка сервера", http.StatusInternalServerError)
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(cred); err != nil {
+		slog.Error("получение учётных данных: ошибка кодирования ответа", "error", err)
 		http.Error(w, "ошибка записи ответа", http.StatusInternalServerError)
 	}
 }
@@ -204,12 +211,14 @@ func (h *CredentialHandler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err != nil {
+		slog.Error("обновление учётных данных: ошибка сервиса", "error", err)
 		http.Error(w, "внутренняя ошибка сервера", http.StatusInternalServerError)
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(cred); err != nil {
+		slog.Error("обновление учётных данных: ошибка кодирования ответа", "error", err)
 		http.Error(w, "ошибка записи ответа", http.StatusInternalServerError)
 	}
 }
@@ -242,6 +251,7 @@ func (h *CredentialHandler) Delete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err != nil {
+		slog.Error("удаление учётных данных: ошибка сервиса", "error", err)
 		http.Error(w, "внутренняя ошибка сервера", http.StatusInternalServerError)
 		return
 	}

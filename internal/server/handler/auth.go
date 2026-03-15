@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"log/slog"
 	"net/http"
 
 	"github.com/MarkelovSergey/goph-keeper/internal/server/service"
@@ -58,6 +59,7 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err != nil {
+		slog.Error("регистрация пользователя: ошибка сервиса", "error", err)
 		http.Error(w, "внутренняя ошибка сервера", http.StatusInternalServerError)
 		return
 	}
@@ -94,6 +96,7 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err != nil {
+		slog.Error("вход пользователя: ошибка сервиса", "error", err)
 		http.Error(w, "внутренняя ошибка сервера", http.StatusInternalServerError)
 		return
 	}
