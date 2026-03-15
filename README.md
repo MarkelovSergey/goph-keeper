@@ -89,6 +89,63 @@ make lint            # Запустить golangci-lint
 | `TLS_INSECURE`          | `false`                 | Отключить проверку TLS-сертификата        |
 | `GOPHKEEPER_CONFIG_DIR` | `~/.gophkeeper`         | Директория для хранения состояния клиента |
 
+## Примеры использования клиента
+
+### Аутентификация
+
+```bash
+# Регистрация нового пользователя
+make run-client ARGS="register --login=user@example.com --password=secret"
+
+# Вход (токен сохраняется автоматически)
+make run-client ARGS="login --login=user@example.com --password=secret"
+```
+
+### Управление записями
+
+```bash
+# Показать все записи
+make run-client ARGS="list"
+
+# Показать записи определённого типа
+make run-client ARGS="list --type=login_password"
+```
+
+### Добавление записей
+
+```bash
+# Логин/пароль
+make run-client ARGS="add --type=login_password --name=GitHub --username=user --password=secret"
+
+# Произвольный текст (заметка)
+make run-client ARGS="add --type=text --name=Заметка --text='секретный текст' --password=secret"
+
+# Бинарный файл
+make run-client ARGS="add --type=binary --name=SSH-ключ --file=/home/user/.ssh/id_rsa --password=secret"
+
+# Банковская карта
+make run-client ARGS="add --type=bank_card --name=Visa --number=4111111111111111 --expiry=12/26 --cvv=123 --holder=Ivan --password=secret"
+```
+
+> `--password` в командах `add`/`get`/`update` — это мастер-пароль для **шифрования данных** на стороне клиента, не пароль от аккаунта.
+
+### Просмотр и редактирование
+
+```bash
+# Получить запись (без расшифровки)
+make run-client ARGS="get --id=<UUID>"
+
+# Получить запись с расшифровкой содержимого
+make run-client ARGS="get --id=<UUID> --password=secret"
+
+# Обновить запись (только переданные поля изменятся)
+make run-client ARGS="update --id=<UUID> --password=secret --username=user2"
+make run-client ARGS="update --id=<UUID> --password=secret --name=НовоеИмя"
+
+# Удалить запись
+make run-client ARGS="delete --id=<UUID>"
+```
+
 ## База данных
 
 ```bash

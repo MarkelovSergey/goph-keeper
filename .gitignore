@@ -2,6 +2,7 @@ bin/
 coverage.out
 docs/
 postgres_data/
+certs/
 *.exe
 
 # Environment — contains secrets, do not commit
