@@ -13,6 +13,12 @@ import (
 // ErrNotFound возвращается репозиторием, когда запись не найдена.
 var ErrNotFound = errors.New("запись не найдена")
 
+// ErrAlreadyExists возвращается репозиторием при нарушении уникального ограничения.
+var ErrAlreadyExists = errors.New("запись уже существует")
+
+// ErrInternal возвращается репозиторием при внутренней ошибке хранилища.
+var ErrInternal = errors.New("внутренняя ошибка хранилища")
+
 // UserRepository — интерфейс репозитория пользователей.
 type UserRepository interface {
 	// Create сохраняет нового пользователя.

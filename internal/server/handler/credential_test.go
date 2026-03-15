@@ -17,7 +17,7 @@ import (
 	"github.com/MarkelovSergey/goph-keeper/internal/model"
 	"github.com/MarkelovSergey/goph-keeper/internal/server/handler"
 	"github.com/MarkelovSergey/goph-keeper/internal/server/middleware"
-	pgRepo "github.com/MarkelovSergey/goph-keeper/internal/server/repository/postgres"
+	"github.com/MarkelovSergey/goph-keeper/internal/server/repository"
 	"github.com/MarkelovSergey/goph-keeper/internal/server/service"
 )
 
@@ -38,7 +38,7 @@ func (r *stubCredentialRepo) Create(_ context.Context, cred *model.Credential) e
 func (r *stubCredentialRepo) GetByID(_ context.Context, id, userID uuid.UUID) (*model.Credential, error) {
 	c, ok := r.creds[id]
 	if !ok || c.UserID != userID {
-		return nil, pgRepo.ErrNotFound
+		return nil, repository.ErrNotFound
 	}
 	return c, nil
 }
@@ -55,7 +55,7 @@ func (r *stubCredentialRepo) ListByUserID(_ context.Context, userID uuid.UUID) (
 
 func (r *stubCredentialRepo) Update(_ context.Context, cred *model.Credential) error {
 	if _, ok := r.creds[cred.ID]; !ok {
-		return pgRepo.ErrNotFound
+		return repository.ErrNotFound
 	}
 	r.creds[cred.ID] = cred
 	return nil
@@ -64,7 +64,7 @@ func (r *stubCredentialRepo) Update(_ context.Context, cred *model.Credential) e
 func (r *stubCredentialRepo) Delete(_ context.Context, id, userID uuid.UUID) error {
 	c, ok := r.creds[id]
 	if !ok || c.UserID != userID {
-		return pgRepo.ErrNotFound
+		return repository.ErrNotFound
 	}
 	delete(r.creds, id)
 	return nil

@@ -4,6 +4,7 @@ package service
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -12,13 +13,6 @@ import (
 
 	"github.com/MarkelovSergey/goph-keeper/internal/model"
 	"github.com/MarkelovSergey/goph-keeper/internal/server/repository"
-)
-
-// Ошибки аутентификации.
-var (
-	ErrInvalidCredentials = errors.New("неверный логин или пароль")
-	ErrUserAlreadyExists  = errors.New("пользователь уже существует")
-	ErrInvalidToken       = errors.New("невалидный токен")
 )
 
 // Claims — JWT-клеймы с идентификатором пользователя.
@@ -45,17 +39,9 @@ func NewAuthService(userRepo repository.UserRepository, jwtSecret string, tokenT
 
 // Register регистрирует нового пользователя и возвращает JWT-токен.
 func (s *AuthService) Register(ctx context.Context, login, password string) (string, error) {
-	_, err := s.userRepo.GetByLogin(ctx, login)
-	if err == nil {
-		return "", ErrUserAlreadyExists
-	}
-	if !errors.Is(err, repository.ErrNotFound) {
-		return "", err
-	}
-
 	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("register hash: %w", errors.Join(ErrInternal, err))
 	}
 
 	user := &model.User{
@@ -65,7 +51,10 @@ func (s *AuthService) Register(ctx context.Context, login, password string) (str
 		CreatedAt:    time.Now(),
 	}
 	if err := s.userRepo.Create(ctx, user); err != nil {
-		return "", err
+		if errors.Is(err, repository.ErrAlreadyExists) {
+			return "", ErrUserAlreadyExists
+		}
+		return "", fmt.Errorf("register create: %w", errors.Join(ErrInternal, err))
 	}
 
 	return s.generateToken(user.ID)
@@ -78,7 +67,7 @@ func (s *AuthService) Login(ctx context.Context, login, password string) (string
 		return "", ErrInvalidCredentials
 	}
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("login get user: %w", errors.Join(ErrInternal, err))
 	}
 
 	if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(password)); err != nil {
@@ -112,5 +101,9 @@ func (s *AuthService) generateToken(userID uuid.UUID) (string, error) {
 		},
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return token.SignedString(s.jwtSecret)
+	signed, err := token.SignedString(s.jwtSecret)
+	if err != nil {
+		return "", fmt.Errorf("generate token: %w", errors.Join(ErrInternal, err))
+	}
+	return signed, nil
 }

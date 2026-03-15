@@ -11,7 +11,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 
 	"github.com/MarkelovSergey/goph-keeper/internal/model"
-	pgRepo "github.com/MarkelovSergey/goph-keeper/internal/server/repository/postgres"
+	"github.com/MarkelovSergey/goph-keeper/internal/server/repository"
 	"github.com/MarkelovSergey/goph-keeper/internal/server/service"
 )
 
@@ -25,6 +25,9 @@ func newMockUserRepo() *mockUserRepo {
 }
 
 func (m *mockUserRepo) Create(_ context.Context, user *model.User) error {
+	if _, exists := m.users[user.Login]; exists {
+		return repository.ErrAlreadyExists
+	}
 	m.users[user.Login] = user
 	return nil
 }
@@ -33,7 +36,7 @@ func (m *mockUserRepo) GetByLogin(_ context.Context, login string) (*model.User,
 	if u, ok := m.users[login]; ok {
 		return u, nil
 	}
-	return nil, pgRepo.ErrNotFound
+	return nil, repository.ErrNotFound
 }
 
 func (m *mockUserRepo) GetByID(_ context.Context, id uuid.UUID) (*model.User, error) {
@@ -42,7 +45,7 @@ func (m *mockUserRepo) GetByID(_ context.Context, id uuid.UUID) (*model.User, er
 			return u, nil
 		}
 	}
-	return nil, pgRepo.ErrNotFound
+	return nil, repository.ErrNotFound
 }
 
 func newAuthService() *service.AuthService {

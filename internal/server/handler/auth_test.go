@@ -16,7 +16,7 @@ import (
 
 	"github.com/MarkelovSergey/goph-keeper/internal/model"
 	"github.com/MarkelovSergey/goph-keeper/internal/server/handler"
-	pgRepo "github.com/MarkelovSergey/goph-keeper/internal/server/repository/postgres"
+	"github.com/MarkelovSergey/goph-keeper/internal/server/repository"
 	"github.com/MarkelovSergey/goph-keeper/internal/server/service"
 )
 
@@ -30,6 +30,9 @@ func newStubUserRepo() *stubUserRepo {
 }
 
 func (r *stubUserRepo) Create(_ context.Context, user *model.User) error {
+	if _, exists := r.users[user.Login]; exists {
+		return repository.ErrAlreadyExists
+	}
 	r.users[user.Login] = user
 	return nil
 }
@@ -38,7 +41,7 @@ func (r *stubUserRepo) GetByLogin(_ context.Context, login string) (*model.User,
 	if u, ok := r.users[login]; ok {
 		return u, nil
 	}
-	return nil, pgRepo.ErrNotFound
+	return nil, repository.ErrNotFound
 }
 
 func (r *stubUserRepo) GetByID(_ context.Context, id uuid.UUID) (*model.User, error) {
@@ -47,7 +50,7 @@ func (r *stubUserRepo) GetByID(_ context.Context, id uuid.UUID) (*model.User, er
 			return u, nil
 		}
 	}
-	return nil, pgRepo.ErrNotFound
+	return nil, repository.ErrNotFound
 }
 
 func newTestAuthHandler() *handler.AuthHandler {

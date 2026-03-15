@@ -3,9 +3,11 @@ package postgres
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/MarkelovSergey/goph-keeper/internal/model"
@@ -24,7 +26,14 @@ func NewUserRepository(db *pgxpool.Pool) repository.UserRepository {
 func (r *userRepo) Create(ctx context.Context, user *model.User) error {
 	const q = `INSERT INTO users (id, login, password_hash, created_at) VALUES ($1, $2, $3, $4)`
 	_, err := r.db.Exec(ctx, q, user.ID, user.Login, user.PasswordHash, user.CreatedAt)
-	return err
+	var pgErr *pgconn.PgError
+	if errors.As(err, &pgErr) && pgErr.Code == pgCodeAlreadyExists {
+		return repository.ErrAlreadyExists
+	}
+	if err != nil {
+		return fmt.Errorf("user create: %w", errors.Join(repository.ErrInternal, err))
+	}
+	return nil
 }
 
 func (r *userRepo) GetByLogin(ctx context.Context, login string) (*model.User, error) {
@@ -32,9 +41,12 @@ func (r *userRepo) GetByLogin(ctx context.Context, login string) (*model.User, e
 	user := &model.User{}
 	err := r.db.QueryRow(ctx, q, login).Scan(&user.ID, &user.Login, &user.PasswordHash, &user.CreatedAt)
 	if errors.Is(err, pgx.ErrNoRows) {
-		return nil, ErrNotFound
+		return nil, repository.ErrNotFound
 	}
-	return user, err
+	if err != nil {
+		return nil, fmt.Errorf("user get by login: %w", errors.Join(repository.ErrInternal, err))
+	}
+	return user, nil
 }
 
 func (r *userRepo) GetByID(ctx context.Context, id uuid.UUID) (*model.User, error) {
@@ -42,7 +54,10 @@ func (r *userRepo) GetByID(ctx context.Context, id uuid.UUID) (*model.User, erro
 	user := &model.User{}
 	err := r.db.QueryRow(ctx, q, id).Scan(&user.ID, &user.Login, &user.PasswordHash, &user.CreatedAt)
 	if errors.Is(err, pgx.ErrNoRows) {
-		return nil, ErrNotFound
+		return nil, repository.ErrNotFound
 	}
-	return user, err
+	if err != nil {
+		return nil, fmt.Errorf("user get by id: %w", errors.Join(repository.ErrInternal, err))
+	}
+	return user, nil
 }

@@ -12,7 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/MarkelovSergey/goph-keeper/internal/server/middleware"
-	pgRepo "github.com/MarkelovSergey/goph-keeper/internal/server/repository/postgres"
+	"github.com/MarkelovSergey/goph-keeper/internal/server/repository"
 	"github.com/MarkelovSergey/goph-keeper/internal/server/service"
 
 	"github.com/MarkelovSergey/goph-keeper/internal/model"
@@ -31,7 +31,7 @@ func (r *stubRepo) GetByLogin(_ context.Context, login string) (*model.User, err
 	if u, ok := r.users[login]; ok {
 		return u, nil
 	}
-	return nil, pgRepo.ErrNotFound
+	return nil, repository.ErrNotFound
 }
 
 func (r *stubRepo) GetByID(_ context.Context, id uuid.UUID) (*model.User, error) {
@@ -40,7 +40,7 @@ func (r *stubRepo) GetByID(_ context.Context, id uuid.UUID) (*model.User, error)
 			return u, nil
 		}
 	}
-	return nil, pgRepo.ErrNotFound
+	return nil, repository.ErrNotFound
 }
 
 func TestAuthMiddleware_ValidToken(t *testing.T) {

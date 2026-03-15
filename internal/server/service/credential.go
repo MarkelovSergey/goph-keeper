@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/google/uuid"
@@ -10,9 +11,6 @@ import (
 	"github.com/MarkelovSergey/goph-keeper/internal/model"
 	"github.com/MarkelovSergey/goph-keeper/internal/server/repository"
 )
-
-// ErrNotFound возвращается, когда запись не найдена.
-var ErrNotFound = errors.New("запись не найдена")
 
 // CredentialService управляет учётными данными пользователей.
 type CredentialService struct {
@@ -44,7 +42,7 @@ func (s *CredentialService) Create(
 		UpdatedAt: now,
 	}
 	if err := s.repo.Create(ctx, cred); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("credential create: %w", errors.Join(ErrInternal, err))
 	}
 	return cred, nil
 }
@@ -55,12 +53,19 @@ func (s *CredentialService) GetByID(ctx context.Context, id, userID uuid.UUID) (
 	if errors.Is(err, repository.ErrNotFound) {
 		return nil, ErrNotFound
 	}
-	return cred, err
+	if err != nil {
+		return nil, fmt.Errorf("credential get: %w", errors.Join(ErrInternal, err))
+	}
+	return cred, nil
 }
 
 // ListByUserID возвращает все записи пользователя.
 func (s *CredentialService) ListByUserID(ctx context.Context, userID uuid.UUID) ([]*model.Credential, error) {
-	return s.repo.ListByUserID(ctx, userID)
+	creds, err := s.repo.ListByUserID(ctx, userID)
+	if err != nil {
+		return nil, fmt.Errorf("credential list: %w", errors.Join(ErrInternal, err))
+	}
+	return creds, nil
 }
 
 // Update обновляет существующие учётные данные.
@@ -75,14 +80,14 @@ func (s *CredentialService) Update(
 		return nil, ErrNotFound
 	}
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("credential update get: %w", errors.Join(ErrInternal, err))
 	}
 	cred.Name = name
 	cred.Metadata = metadata
 	cred.Data = data
 	cred.UpdatedAt = time.Now()
 	if err := s.repo.Update(ctx, cred); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("credential update: %w", errors.Join(ErrInternal, err))
 	}
 	return cred, nil
 }
@@ -93,5 +98,8 @@ func (s *CredentialService) Delete(ctx context.Context, id, userID uuid.UUID) er
 	if errors.Is(err, repository.ErrNotFound) {
 		return ErrNotFound
 	}
-	return err
+	if err != nil {
+		return fmt.Errorf("credential delete: %w", errors.Join(ErrInternal, err))
+	}
+	return nil
 }
