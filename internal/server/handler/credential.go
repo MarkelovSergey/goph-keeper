@@ -96,7 +96,6 @@ func (h *CredentialHandler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
 	data, err := json.Marshal(cred)
 	if err != nil {
 		slog.Error("создание учётных данных: ошибка кодирования ответа", "error", err)
