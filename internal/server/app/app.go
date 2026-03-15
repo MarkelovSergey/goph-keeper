@@ -66,6 +66,7 @@ func New(cfg *config.Config) (*App, error) {
 	r := chi.NewRouter()
 	r.Use(chiMiddleware.Recoverer)
 	r.Use(middleware.Logger)
+	r.Use(middleware.MaxBodySize)
 
 	r.Get("/swagger/*", httpSwagger.WrapHandler)
 
