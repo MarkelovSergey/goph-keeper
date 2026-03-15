@@ -42,7 +42,8 @@ func (a *App) newAddCmd() *cobra.Command {
 		name     string
 		metadata string
 		// login_password
-		username string
+		username     string
+		credPassword string
 		// text
 		text string
 		// binary
@@ -83,7 +84,7 @@ func (a *App) newAddCmd() *cobra.Command {
 
 			key := crypto.DeriveKey(password, state.Salt, state.ArgonParams)
 
-			plaintext, cType, err := buildPlainText(credType, username, password, text, filePath, cardNumber, cardExpiry, cardCVV, cardHolder)
+			plaintext, cType, err := buildPlainText(credType, username, credPassword, text, filePath, cardNumber, cardExpiry, cardCVV, cardHolder)
 			if err != nil {
 				return err
 			}
@@ -107,6 +108,7 @@ func (a *App) newAddCmd() *cobra.Command {
 	cmd.Flags().StringVar(&name, "name", "", "название записи (обязательно)")
 	cmd.Flags().StringVar(&metadata, "meta", "", "дополнительные метаданные")
 	cmd.Flags().StringVar(&username, "username", "", "имя пользователя (для login_password)")
+	cmd.Flags().StringVar(&credPassword, "password", "", "пароль записи (для login_password)")
 	cmd.Flags().StringVar(&text, "text", "", "текстовое содержимое (для text)")
 	cmd.Flags().StringVar(&filePath, "file", "", "путь к файлу (для binary)")
 	cmd.Flags().StringVar(&cardNumber, "number", "", "номер карты (для bank_card)")
