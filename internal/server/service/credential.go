@@ -42,7 +42,7 @@ func (s *CredentialService) Create(
 		UpdatedAt: now,
 	}
 	if err := s.repo.Create(ctx, cred); err != nil {
-		return nil, fmt.Errorf("credential create: %w", errors.Join(ErrInternal, err))
+		return nil, fmt.Errorf("credential create: %w: %w", ErrInternal, err)
 	}
 	return cred, nil
 }
@@ -54,7 +54,7 @@ func (s *CredentialService) GetByID(ctx context.Context, id, userID uuid.UUID) (
 		return nil, ErrNotFound
 	}
 	if err != nil {
-		return nil, fmt.Errorf("credential get: %w", errors.Join(ErrInternal, err))
+		return nil, fmt.Errorf("credential get: %w: %w", ErrInternal, err)
 	}
 	return cred, nil
 }
@@ -63,7 +63,7 @@ func (s *CredentialService) GetByID(ctx context.Context, id, userID uuid.UUID) (
 func (s *CredentialService) ListByUserID(ctx context.Context, userID uuid.UUID) ([]*model.Credential, error) {
 	creds, err := s.repo.ListByUserID(ctx, userID)
 	if err != nil {
-		return nil, fmt.Errorf("credential list: %w", errors.Join(ErrInternal, err))
+		return nil, fmt.Errorf("credential list: %w: %w", ErrInternal, err)
 	}
 	return creds, nil
 }
@@ -80,14 +80,14 @@ func (s *CredentialService) Update(
 		return nil, ErrNotFound
 	}
 	if err != nil {
-		return nil, fmt.Errorf("credential update get: %w", errors.Join(ErrInternal, err))
+		return nil, fmt.Errorf("credential update get: %w: %w", ErrInternal, err)
 	}
 	cred.Name = name
 	cred.Metadata = metadata
 	cred.Data = data
 	cred.UpdatedAt = time.Now()
 	if err := s.repo.Update(ctx, cred); err != nil {
-		return nil, fmt.Errorf("credential update: %w", errors.Join(ErrInternal, err))
+		return nil, fmt.Errorf("credential update: %w: %w", ErrInternal, err)
 	}
 	return cred, nil
 }
@@ -99,7 +99,7 @@ func (s *CredentialService) Delete(ctx context.Context, id, userID uuid.UUID) er
 		return ErrNotFound
 	}
 	if err != nil {
-		return fmt.Errorf("credential delete: %w", errors.Join(ErrInternal, err))
+		return fmt.Errorf("credential delete: %w: %w", ErrInternal, err)
 	}
 	return nil
 }

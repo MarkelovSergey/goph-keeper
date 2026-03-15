@@ -31,7 +31,7 @@ func (r *userRepo) Create(ctx context.Context, user *model.User) error {
 		return repository.ErrAlreadyExists
 	}
 	if err != nil {
-		return fmt.Errorf("user create: %w", errors.Join(repository.ErrInternal, err))
+		return fmt.Errorf("user create: %w: %w", repository.ErrInternal, err)
 	}
 	return nil
 }
@@ -44,7 +44,7 @@ func (r *userRepo) GetByLogin(ctx context.Context, login string) (*model.User, e
 		return nil, repository.ErrNotFound
 	}
 	if err != nil {
-		return nil, fmt.Errorf("user get by login: %w", errors.Join(repository.ErrInternal, err))
+		return nil, fmt.Errorf("user get by login: %w: %w", repository.ErrInternal, err)
 	}
 	return user, nil
 }
@@ -57,7 +57,7 @@ func (r *userRepo) GetByID(ctx context.Context, id uuid.UUID) (*model.User, erro
 		return nil, repository.ErrNotFound
 	}
 	if err != nil {
-		return nil, fmt.Errorf("user get by id: %w", errors.Join(repository.ErrInternal, err))
+		return nil, fmt.Errorf("user get by id: %w: %w", repository.ErrInternal, err)
 	}
 	return user, nil
 }
