@@ -7,9 +7,12 @@
 
 ## Требования
 
-- Go 1.26+
-- Docker и Docker Compose (для локальной базы данных)
-- [golangci-lint](https://golangci-lint.run/) (для линтера)
+- **Go 1.26.1+** — язык разработки
+- **Docker и Docker Compose** — для запуска локальной базы данных PostgreSQL 16
+- **GNU Make** — для запуска команд из `Makefile`
+- **[golang-migrate](https://github.com/golang-migrate/migrate)** (`migrate`) — применение миграций базы данных
+- **[golangci-lint](https://golangci-lint.run/)** — статический анализ кода
+- **[swaggo/swag](https://github.com/swaggo/swag)** (`swag`) — генерация документации Swagger (опционально)
 
 ## Быстрый старт
 
