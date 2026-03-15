@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/google/uuid"
@@ -9,6 +10,9 @@ import (
 	"github.com/MarkelovSergey/goph-keeper/internal/model"
 	"github.com/MarkelovSergey/goph-keeper/internal/server/repository"
 )
+
+// ErrNotFound возвращается, когда запись не найдена.
+var ErrNotFound = errors.New("запись не найдена")
 
 // CredentialService управляет учётными данными пользователей.
 type CredentialService struct {
@@ -47,7 +51,11 @@ func (s *CredentialService) Create(
 
 // GetByID возвращает запись по ID.
 func (s *CredentialService) GetByID(ctx context.Context, id, userID uuid.UUID) (*model.Credential, error) {
-	return s.repo.GetByID(ctx, id, userID)
+	cred, err := s.repo.GetByID(ctx, id, userID)
+	if errors.Is(err, repository.ErrNotFound) {
+		return nil, ErrNotFound
+	}
+	return cred, err
 }
 
 // ListByUserID возвращает все записи пользователя.
@@ -63,6 +71,9 @@ func (s *CredentialService) Update(
 	data []byte,
 ) (*model.Credential, error) {
 	cred, err := s.repo.GetByID(ctx, id, userID)
+	if errors.Is(err, repository.ErrNotFound) {
+		return nil, ErrNotFound
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -78,5 +89,9 @@ func (s *CredentialService) Update(
 
 // Delete удаляет учётные данные.
 func (s *CredentialService) Delete(ctx context.Context, id, userID uuid.UUID) error {
-	return s.repo.Delete(ctx, id, userID)
+	err := s.repo.Delete(ctx, id, userID)
+	if errors.Is(err, repository.ErrNotFound) {
+		return ErrNotFound
+	}
+	return err
 }

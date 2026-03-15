@@ -12,7 +12,6 @@ import (
 
 	"github.com/MarkelovSergey/goph-keeper/internal/model"
 	"github.com/MarkelovSergey/goph-keeper/internal/server/repository"
-	pgRepo "github.com/MarkelovSergey/goph-keeper/internal/server/repository/postgres"
 )
 
 // Ошибки аутентификации.
@@ -50,7 +49,7 @@ func (s *AuthService) Register(ctx context.Context, login, password string) (str
 	if err == nil {
 		return "", ErrUserAlreadyExists
 	}
-	if !errors.Is(err, pgRepo.ErrNotFound) {
+	if !errors.Is(err, repository.ErrNotFound) {
 		return "", err
 	}
 
@@ -75,7 +74,7 @@ func (s *AuthService) Register(ctx context.Context, login, password string) (str
 // Login аутентифицирует пользователя и возвращает JWT-токен.
 func (s *AuthService) Login(ctx context.Context, login, password string) (string, error) {
 	user, err := s.userRepo.GetByLogin(ctx, login)
-	if errors.Is(err, pgRepo.ErrNotFound) {
+	if errors.Is(err, repository.ErrNotFound) {
 		return "", ErrInvalidCredentials
 	}
 	if err != nil {

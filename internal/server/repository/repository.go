@@ -3,11 +3,15 @@ package repository
 
 import (
 	"context"
+	"errors"
 
 	"github.com/google/uuid"
 
 	"github.com/MarkelovSergey/goph-keeper/internal/model"
 )
+
+// ErrNotFound возвращается репозиторием, когда запись не найдена.
+var ErrNotFound = errors.New("запись не найдена")
 
 // UserRepository — интерфейс репозитория пользователей.
 type UserRepository interface {

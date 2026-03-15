@@ -1,7 +1,7 @@
 // Package postgres реализует репозитории на основе PostgreSQL.
 package postgres
 
-import "errors"
+import "github.com/MarkelovSergey/goph-keeper/internal/server/repository"
 
-// ErrNotFound возвращается, когда запись не найдена в базе данных.
-var ErrNotFound = errors.New("запись не найдена")
+// ErrNotFound — псевдоним repository.ErrNotFound для использования внутри пакета.
+var ErrNotFound = repository.ErrNotFound

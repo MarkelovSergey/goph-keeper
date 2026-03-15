@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"net/http"
@@ -10,17 +11,25 @@ import (
 
 	"github.com/MarkelovSergey/goph-keeper/internal/model"
 	"github.com/MarkelovSergey/goph-keeper/internal/server/middleware"
-	pgRepo "github.com/MarkelovSergey/goph-keeper/internal/server/repository/postgres"
 	"github.com/MarkelovSergey/goph-keeper/internal/server/service"
 )
 
+// credentialService — интерфейс сервиса учётных данных.
+type credentialService interface {
+	Create(ctx context.Context, userID uuid.UUID, credType model.CredentialType, name, metadata string, data []byte) (*model.Credential, error)
+	GetByID(ctx context.Context, id, userID uuid.UUID) (*model.Credential, error)
+	ListByUserID(ctx context.Context, userID uuid.UUID) ([]*model.Credential, error)
+	Update(ctx context.Context, id, userID uuid.UUID, name, metadata string, data []byte) (*model.Credential, error)
+	Delete(ctx context.Context, id, userID uuid.UUID) error
+}
+
 // CredentialHandler обрабатывает CRUD-запросы для учётных данных.
 type CredentialHandler struct {
-	svc *service.CredentialService
+	svc credentialService
 }
 
 // NewCredentialHandler создаёт обработчик учётных данных.
-func NewCredentialHandler(svc *service.CredentialService) *CredentialHandler {
+func NewCredentialHandler(svc credentialService) *CredentialHandler {
 	return &CredentialHandler{svc: svc}
 }
 
@@ -128,7 +137,7 @@ func (h *CredentialHandler) Get(w http.ResponseWriter, r *http.Request) {
 	}
 
 	cred, err := h.svc.GetByID(r.Context(), credID, userID)
-	if errors.Is(err, pgRepo.ErrNotFound) {
+	if errors.Is(err, service.ErrNotFound) {
 		http.Error(w, "учётные данные не найдены", http.StatusNotFound)
 		return
 	}
@@ -176,7 +185,7 @@ func (h *CredentialHandler) Update(w http.ResponseWriter, r *http.Request) {
 	}
 
 	cred, err := h.svc.Update(r.Context(), credID, userID, req.Name, req.Metadata, req.Data)
-	if errors.Is(err, pgRepo.ErrNotFound) {
+	if errors.Is(err, service.ErrNotFound) {
 		http.Error(w, "учётные данные не найдены", http.StatusNotFound)
 		return
 	}
@@ -214,7 +223,7 @@ func (h *CredentialHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	}
 
 	err = h.svc.Delete(r.Context(), credID, userID)
-	if errors.Is(err, pgRepo.ErrNotFound) {
+	if errors.Is(err, service.ErrNotFound) {
 		http.Error(w, "учётные данные не найдены", http.StatusNotFound)
 		return
 	}

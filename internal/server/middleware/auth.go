@@ -6,9 +6,12 @@ import (
 	"strings"
 
 	"github.com/google/uuid"
-
-	"github.com/MarkelovSergey/goph-keeper/internal/server/service"
 )
+
+// tokenParser — интерфейс для разбора JWT-токена.
+type tokenParser interface {
+	ParseToken(tokenString string) (uuid.UUID, error)
+}
 
 // contextKey — тип для ключей контекста запроса.
 type contextKey string
@@ -17,7 +20,7 @@ type contextKey string
 const UserIDKey contextKey = "user_id"
 
 // Auth проверяет JWT-токен в заголовке Authorization и добавляет ID пользователя в контекст.
-func Auth(authSvc *service.AuthService) func(http.Handler) http.Handler {
+func Auth(authSvc tokenParser) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			header := r.Header.Get("Authorization")

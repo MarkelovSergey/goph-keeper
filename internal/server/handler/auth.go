@@ -2,6 +2,7 @@
 package handler
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"net/http"
@@ -9,13 +10,19 @@ import (
 	"github.com/MarkelovSergey/goph-keeper/internal/server/service"
 )
 
+// authService — интерфейс сервиса аутентификации.
+type authService interface {
+	Register(ctx context.Context, login, password string) (string, error)
+	Login(ctx context.Context, login, password string) (string, error)
+}
+
 // AuthHandler обрабатывает запросы регистрации и входа.
 type AuthHandler struct {
-	authSvc *service.AuthService
+	authSvc authService
 }
 
 // NewAuthHandler создаёт обработчик аутентификации.
-func NewAuthHandler(authSvc *service.AuthService) *AuthHandler {
+func NewAuthHandler(authSvc authService) *AuthHandler {
 	return &AuthHandler{authSvc: authSvc}
 }
 

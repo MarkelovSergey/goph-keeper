@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/MarkelovSergey/goph-keeper/internal/model"
-	pgRepo "github.com/MarkelovSergey/goph-keeper/internal/server/repository/postgres"
+	"github.com/MarkelovSergey/goph-keeper/internal/server/repository"
 	"github.com/MarkelovSergey/goph-keeper/internal/server/service"
 )
 
@@ -30,7 +30,7 @@ func (m *mockCredentialRepo) Create(_ context.Context, cred *model.Credential) e
 func (m *mockCredentialRepo) GetByID(_ context.Context, id, userID uuid.UUID) (*model.Credential, error) {
 	c, ok := m.creds[id]
 	if !ok || c.UserID != userID {
-		return nil, pgRepo.ErrNotFound
+		return nil, repository.ErrNotFound
 	}
 	return c, nil
 }
@@ -47,7 +47,7 @@ func (m *mockCredentialRepo) ListByUserID(_ context.Context, userID uuid.UUID) (
 
 func (m *mockCredentialRepo) Update(_ context.Context, cred *model.Credential) error {
 	if _, ok := m.creds[cred.ID]; !ok {
-		return pgRepo.ErrNotFound
+		return repository.ErrNotFound
 	}
 	m.creds[cred.ID] = cred
 	return nil
@@ -56,7 +56,7 @@ func (m *mockCredentialRepo) Update(_ context.Context, cred *model.Credential) e
 func (m *mockCredentialRepo) Delete(_ context.Context, id, userID uuid.UUID) error {
 	c, ok := m.creds[id]
 	if !ok || c.UserID != userID {
-		return pgRepo.ErrNotFound
+		return repository.ErrNotFound
 	}
 	delete(m.creds, id)
 	return nil
@@ -99,7 +99,7 @@ func TestCredentialService_GetByID_WrongUser(t *testing.T) {
 	require.NoError(t, err)
 
 	_, err = svc.GetByID(context.Background(), created.ID, otherUserID)
-	assert.ErrorIs(t, err, pgRepo.ErrNotFound)
+	assert.ErrorIs(t, err, service.ErrNotFound)
 }
 
 func TestCredentialService_ListByUserID(t *testing.T) {
@@ -141,7 +141,7 @@ func TestCredentialService_Delete(t *testing.T) {
 	require.NoError(t, err)
 
 	_, err = svc.GetByID(context.Background(), created.ID, userID)
-	assert.ErrorIs(t, err, pgRepo.ErrNotFound)
+	assert.ErrorIs(t, err, service.ErrNotFound)
 }
 
 func TestCredentialService_Delete_WrongUser(t *testing.T) {
@@ -152,5 +152,5 @@ func TestCredentialService_Delete_WrongUser(t *testing.T) {
 	require.NoError(t, err)
 
 	err = svc.Delete(context.Background(), created.ID, uuid.New())
-	assert.ErrorIs(t, err, pgRepo.ErrNotFound)
+	assert.ErrorIs(t, err, service.ErrNotFound)
 }
