@@ -1,0 +1,931 @@
+{
+  "info": {
+    "_postman_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+    "name": "Goph-Keeper API",
+    "description": "Коллекция запросов для менеджера паролей goph-keeper.\n\nТокен автоматически сохраняется в переменную `token` после входа/регистрации.\nID последней созданной записи сохраняется в `credential_id`.\n\n**Порядок работы:**\n1. Запустить сервер: `make run-server`\n2. Выполнить «Регистрация» или «Вход» — токен сохранится автоматически\n3. Выполнять запросы к учётным данным\n\n**Шифрование:** поле `data` содержит base64-закодированный зашифрованный blob.\nКлиент шифрует данные перед отправкой (AES-256-GCM), сервер хранит непрозрачный blob.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8080",
+      "type": "string",
+      "description": "Базовый URL сервера"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string",
+      "description": "JWT-токен, сохраняется автоматически после входа/регистрации"
+    },
+    {
+      "key": "credential_id",
+      "value": "",
+      "type": "string",
+      "description": "UUID последней созданной записи, сохраняется автоматически"
+    }
+  ],
+  "item": [
+    {
+      "name": "Аутентификация",
+      "description": "Запросы регистрации и входа. Токен возвращается в заголовке ответа `Authorization: Bearer <token>`.",
+      "item": [
+        {
+          "name": "Регистрация",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// Токен возвращается в заголовке Authorization ответа",
+                  "var authHeader = pm.response.headers.get('Authorization');",
+                  "if (authHeader && authHeader.startsWith('Bearer ')) {",
+                  "    var token = authHeader.substring(7);",
+                  "    pm.collectionVariables.set('token', token);",
+                  "    console.log('Токен сохранён:', token.substring(0, 20) + '...');",
+                  "}",
+                  "",
+                  "pm.test('Статус 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Заголовок Authorization присутствует', function () {",
+                  "    pm.response.to.have.header('Authorization');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"login\": \"user@example.com\",\n  \"password\": \"secret123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/register",
+              "host": ["{{base_url}}"],
+              "path": ["api", "register"]
+            },
+            "description": "Регистрация нового пользователя.\n\nТокен возвращается в заголовке `Authorization: Bearer <token>` и автоматически сохраняется в переменную коллекции `token`."
+          },
+          "response": [
+            {
+              "name": "200 OK — пользователь зарегистрирован",
+              "originalRequest": {
+                "method": "POST",
+                "header": [{"key": "Content-Type", "value": "application/json"}],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"login\": \"user@example.com\",\n  \"password\": \"secret123\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/register",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "register"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "text",
+              "header": [
+                {"key": "Authorization", "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."},
+                {"key": "Content-Type", "value": "application/json"}
+              ],
+              "body": ""
+            },
+            {
+              "name": "400 Bad Request — пустой логин или пароль",
+              "originalRequest": {
+                "method": "POST",
+                "header": [{"key": "Content-Type", "value": "application/json"}],
+                "body": {"mode": "raw", "raw": "{\n  \"login\": \"\",\n  \"password\": \"\"\n}"},
+                "url": {"raw": "{{base_url}}/api/register", "host": ["{{base_url}}"], "path": ["api", "register"]}
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": "text",
+              "header": [],
+              "body": "логин и пароль обязательны\n"
+            },
+            {
+              "name": "409 Conflict — пользователь уже существует",
+              "originalRequest": {
+                "method": "POST",
+                "header": [{"key": "Content-Type", "value": "application/json"}],
+                "body": {"mode": "raw", "raw": "{\n  \"login\": \"user@example.com\",\n  \"password\": \"secret123\"\n}"},
+                "url": {"raw": "{{base_url}}/api/register", "host": ["{{base_url}}"], "path": ["api", "register"]}
+              },
+              "status": "Conflict",
+              "code": 409,
+              "_postman_previewlanguage": "text",
+              "header": [],
+              "body": "пользователь уже существует\n"
+            }
+          ]
+        },
+        {
+          "name": "Вход",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// Токен возвращается в заголовке Authorization ответа",
+                  "var authHeader = pm.response.headers.get('Authorization');",
+                  "if (authHeader && authHeader.startsWith('Bearer ')) {",
+                  "    var token = authHeader.substring(7);",
+                  "    pm.collectionVariables.set('token', token);",
+                  "    console.log('Токен сохранён:', token.substring(0, 20) + '...');",
+                  "}",
+                  "",
+                  "pm.test('Статус 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Заголовок Authorization присутствует', function () {",
+                  "    pm.response.to.have.header('Authorization');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"login\": \"user@example.com\",\n  \"password\": \"secret123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/login",
+              "host": ["{{base_url}}"],
+              "path": ["api", "login"]
+            },
+            "description": "Вход существующего пользователя.\n\nТокен возвращается в заголовке `Authorization: Bearer <token>` и автоматически сохраняется в переменную коллекции `token`."
+          },
+          "response": [
+            {
+              "name": "200 OK — вход выполнен",
+              "originalRequest": {
+                "method": "POST",
+                "header": [{"key": "Content-Type", "value": "application/json"}],
+                "body": {"mode": "raw", "raw": "{\n  \"login\": \"user@example.com\",\n  \"password\": \"secret123\"\n}"},
+                "url": {"raw": "{{base_url}}/api/login", "host": ["{{base_url}}"], "path": ["api", "login"]}
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "text",
+              "header": [
+                {"key": "Authorization", "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."},
+                {"key": "Content-Type", "value": "application/json"}
+              ],
+              "body": ""
+            },
+            {
+              "name": "400 Bad Request — пустой логин или пароль",
+              "originalRequest": {
+                "method": "POST",
+                "header": [{"key": "Content-Type", "value": "application/json"}],
+                "body": {"mode": "raw", "raw": "{\n  \"login\": \"\",\n  \"password\": \"\"\n}"},
+                "url": {"raw": "{{base_url}}/api/login", "host": ["{{base_url}}"], "path": ["api", "login"]}
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": "text",
+              "header": [],
+              "body": "логин и пароль обязательны\n"
+            },
+            {
+              "name": "401 Unauthorized — неверные учётные данные",
+              "originalRequest": {
+                "method": "POST",
+                "header": [{"key": "Content-Type", "value": "application/json"}],
+                "body": {"mode": "raw", "raw": "{\n  \"login\": \"user@example.com\",\n  \"password\": \"wrong\"\n}"},
+                "url": {"raw": "{{base_url}}/api/login", "host": ["{{base_url}}"], "path": ["api", "login"]}
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "_postman_previewlanguage": "text",
+              "header": [],
+              "body": "неверный логин или пароль\n"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Учётные данные",
+      "description": "CRUD-операции над учётными данными. Все запросы требуют JWT-токен в заголовке `Authorization: Bearer {{token}}`.\n\nПоле `data` — base64-закодированный зашифрованный blob (сервер хранит непрозрачно).\nДоступные типы: `login_password`, `text`, `binary`, `bank_card`.",
+      "item": [
+        {
+          "name": "Список всех записей",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Статус 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Ответ является массивом', function () {",
+                  "    var json = pm.response.json();",
+                  "    pm.expect(json).to.be.an('array');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/credentials",
+              "host": ["{{base_url}}"],
+              "path": ["api", "credentials"]
+            },
+            "description": "Получить список всех учётных данных текущего пользователя.\n\nВозвращает массив объектов `Credential`. Поле `data` — base64-закодированный зашифрованный blob."
+          },
+          "response": [
+            {
+              "name": "200 OK — список записей",
+              "originalRequest": {
+                "method": "GET",
+                "header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+                "url": {"raw": "{{base_url}}/api/credentials", "host": ["{{base_url}}"], "path": ["api", "credentials"]}
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [{"key": "Content-Type", "value": "application/json"}],
+              "body": "[\n  {\n    \"id\": \"550e8400-e29b-41d4-a716-446655440000\",\n    \"user_id\": \"550e8400-e29b-41d4-a716-446655440001\",\n    \"type\": \"login_password\",\n    \"name\": \"GitHub\",\n    \"metadata\": \"github.com\",\n    \"data\": \"AQIDBA==\",\n    \"created_at\": \"2026-03-14T12:00:00Z\",\n    \"updated_at\": \"2026-03-14T12:00:00Z\"\n  },\n  {\n    \"id\": \"660e8400-e29b-41d4-a716-446655440002\",\n    \"user_id\": \"550e8400-e29b-41d4-a716-446655440001\",\n    \"type\": \"bank_card\",\n    \"name\": \"Visa\",\n    \"metadata\": \"Сбербанк\",\n    \"data\": \"BQYHCA==\",\n    \"created_at\": \"2026-03-14T13:00:00Z\",\n    \"updated_at\": \"2026-03-14T13:00:00Z\"\n  }\n]"
+            },
+            {
+              "name": "200 OK — пустой список",
+              "originalRequest": {
+                "method": "GET",
+                "header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+                "url": {"raw": "{{base_url}}/api/credentials", "host": ["{{base_url}}"], "path": ["api", "credentials"]}
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [{"key": "Content-Type", "value": "application/json"}],
+              "body": "[]"
+            },
+            {
+              "name": "401 Unauthorized — нет токена",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {"raw": "{{base_url}}/api/credentials", "host": ["{{base_url}}"], "path": ["api", "credentials"]}
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "_postman_previewlanguage": "text",
+              "header": [],
+              "body": "требуется авторизация\n"
+            }
+          ]
+        },
+        {
+          "name": "Создать запись — логин/пароль",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Статус 201 Created', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "var json = pm.response.json();",
+                  "if (json && json.id) {",
+                  "    pm.collectionVariables.set('credential_id', json.id);",
+                  "    console.log('credential_id сохранён:', json.id);",
+                  "}",
+                  "",
+                  "pm.test('Запись содержит ID', function () {",
+                  "    pm.expect(json).to.have.property('id');",
+                  "});",
+                  "",
+                  "pm.test('Тип записи корректный', function () {",
+                  "    pm.expect(json.type).to.equal('login_password');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"login_password\",\n  \"name\": \"GitHub\",\n  \"metadata\": \"github.com\",\n  \"data\": \"AQIDBA==\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/credentials",
+              "host": ["{{base_url}}"],
+              "path": ["api", "credentials"]
+            },
+            "description": "Создать новую запись типа `login_password`.\n\nПоле `data` — base64-закодированный зашифрованный blob (AES-256-GCM).\nID созданной записи сохраняется в переменную `credential_id`."
+          },
+          "response": [
+            {
+              "name": "201 Created — запись создана",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {"key": "Authorization", "value": "Bearer {{token}}"},
+                  {"key": "Content-Type", "value": "application/json"}
+                ],
+                "body": {"mode": "raw", "raw": "{\n  \"type\": \"login_password\",\n  \"name\": \"GitHub\",\n  \"metadata\": \"github.com\",\n  \"data\": \"AQIDBA==\"\n}"},
+                "url": {"raw": "{{base_url}}/api/credentials", "host": ["{{base_url}}"], "path": ["api", "credentials"]}
+              },
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [{"key": "Content-Type", "value": "application/json"}],
+              "body": "{\n  \"id\": \"550e8400-e29b-41d4-a716-446655440000\",\n  \"user_id\": \"550e8400-e29b-41d4-a716-446655440001\",\n  \"type\": \"login_password\",\n  \"name\": \"GitHub\",\n  \"metadata\": \"github.com\",\n  \"data\": \"AQIDBA==\",\n  \"created_at\": \"2026-03-14T12:00:00Z\",\n  \"updated_at\": \"2026-03-14T12:00:00Z\"\n}"
+            },
+            {
+              "name": "400 Bad Request — отсутствует name или type",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {"key": "Authorization", "value": "Bearer {{token}}"},
+                  {"key": "Content-Type", "value": "application/json"}
+                ],
+                "body": {"mode": "raw", "raw": "{\n  \"type\": \"\",\n  \"name\": \"\",\n  \"data\": \"AQIDBA==\"\n}"},
+                "url": {"raw": "{{base_url}}/api/credentials", "host": ["{{base_url}}"], "path": ["api", "credentials"]}
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": "text",
+              "header": [],
+              "body": "имя и тип обязательны\n"
+            },
+            {
+              "name": "401 Unauthorized — нет токена",
+              "originalRequest": {
+                "method": "POST",
+                "header": [{"key": "Content-Type", "value": "application/json"}],
+                "body": {"mode": "raw", "raw": "{\n  \"type\": \"login_password\",\n  \"name\": \"GitHub\",\n  \"data\": \"AQIDBA==\"\n}"},
+                "url": {"raw": "{{base_url}}/api/credentials", "host": ["{{base_url}}"], "path": ["api", "credentials"]}
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "_postman_previewlanguage": "text",
+              "header": [],
+              "body": "требуется авторизация\n"
+            }
+          ]
+        },
+        {
+          "name": "Создать запись — текст",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Статус 201 Created', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "var json = pm.response.json();",
+                  "if (json && json.id) {",
+                  "    pm.collectionVariables.set('credential_id', json.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"text\",\n  \"name\": \"Секретная заметка\",\n  \"metadata\": \"личное\",\n  \"data\": \"AQIDBA==\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/credentials",
+              "host": ["{{base_url}}"],
+              "path": ["api", "credentials"]
+            },
+            "description": "Создать новую запись типа `text` (произвольный текст).\n\nПоле `data` — base64-закодированный зашифрованный blob."
+          },
+          "response": [
+            {
+              "name": "201 Created",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {"key": "Authorization", "value": "Bearer {{token}}"},
+                  {"key": "Content-Type", "value": "application/json"}
+                ],
+                "body": {"mode": "raw", "raw": "{\n  \"type\": \"text\",\n  \"name\": \"Секретная заметка\",\n  \"metadata\": \"личное\",\n  \"data\": \"AQIDBA==\"\n}"},
+                "url": {"raw": "{{base_url}}/api/credentials", "host": ["{{base_url}}"], "path": ["api", "credentials"]}
+              },
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [{"key": "Content-Type", "value": "application/json"}],
+              "body": "{\n  \"id\": \"660e8400-e29b-41d4-a716-446655440002\",\n  \"user_id\": \"550e8400-e29b-41d4-a716-446655440001\",\n  \"type\": \"text\",\n  \"name\": \"Секретная заметка\",\n  \"metadata\": \"личное\",\n  \"data\": \"AQIDBA==\",\n  \"created_at\": \"2026-03-14T12:00:00Z\",\n  \"updated_at\": \"2026-03-14T12:00:00Z\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Создать запись — бинарный файл",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Статус 201 Created', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "var json = pm.response.json();",
+                  "if (json && json.id) {",
+                  "    pm.collectionVariables.set('credential_id', json.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"binary\",\n  \"name\": \"SSH ключ\",\n  \"metadata\": \"id_rsa для сервера prod\",\n  \"data\": \"AQIDBA==\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/credentials",
+              "host": ["{{base_url}}"],
+              "path": ["api", "credentials"]
+            },
+            "description": "Создать новую запись типа `binary` (бинарные данные, например файл ключа).\n\nПоле `data` — base64-закодированный зашифрованный blob с содержимым файла."
+          },
+          "response": [
+            {
+              "name": "201 Created",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {"key": "Authorization", "value": "Bearer {{token}}"},
+                  {"key": "Content-Type", "value": "application/json"}
+                ],
+                "body": {"mode": "raw", "raw": "{\n  \"type\": \"binary\",\n  \"name\": \"SSH ключ\",\n  \"metadata\": \"id_rsa для сервера prod\",\n  \"data\": \"AQIDBA==\"\n}"},
+                "url": {"raw": "{{base_url}}/api/credentials", "host": ["{{base_url}}"], "path": ["api", "credentials"]}
+              },
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [{"key": "Content-Type", "value": "application/json"}],
+              "body": "{\n  \"id\": \"770e8400-e29b-41d4-a716-446655440003\",\n  \"user_id\": \"550e8400-e29b-41d4-a716-446655440001\",\n  \"type\": \"binary\",\n  \"name\": \"SSH ключ\",\n  \"metadata\": \"id_rsa для сервера prod\",\n  \"data\": \"AQIDBA==\",\n  \"created_at\": \"2026-03-14T12:00:00Z\",\n  \"updated_at\": \"2026-03-14T12:00:00Z\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Создать запись — банковская карта",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Статус 201 Created', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "var json = pm.response.json();",
+                  "if (json && json.id) {",
+                  "    pm.collectionVariables.set('credential_id', json.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"bank_card\",\n  \"name\": \"Visa Сбербанк\",\n  \"metadata\": \"зарплатная карта\",\n  \"data\": \"AQIDBA==\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/credentials",
+              "host": ["{{base_url}}"],
+              "path": ["api", "credentials"]
+            },
+            "description": "Создать новую запись типа `bank_card` (данные банковской карты).\n\nПоле `data` — base64-закодированный зашифрованный blob с номером, CVV, сроком действия и именем держателя."
+          },
+          "response": [
+            {
+              "name": "201 Created",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {"key": "Authorization", "value": "Bearer {{token}}"},
+                  {"key": "Content-Type", "value": "application/json"}
+                ],
+                "body": {"mode": "raw", "raw": "{\n  \"type\": \"bank_card\",\n  \"name\": \"Visa Сбербанк\",\n  \"metadata\": \"зарплатная карта\",\n  \"data\": \"AQIDBA==\"\n}"},
+                "url": {"raw": "{{base_url}}/api/credentials", "host": ["{{base_url}}"], "path": ["api", "credentials"]}
+              },
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [{"key": "Content-Type", "value": "application/json"}],
+              "body": "{\n  \"id\": \"880e8400-e29b-41d4-a716-446655440004\",\n  \"user_id\": \"550e8400-e29b-41d4-a716-446655440001\",\n  \"type\": \"bank_card\",\n  \"name\": \"Visa Сбербанк\",\n  \"metadata\": \"зарплатная карта\",\n  \"data\": \"AQIDBA==\",\n  \"created_at\": \"2026-03-14T12:00:00Z\",\n  \"updated_at\": \"2026-03-14T12:00:00Z\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Получить запись по ID",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Статус 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Запись содержит ID', function () {",
+                  "    var json = pm.response.json();",
+                  "    pm.expect(json).to.have.property('id');",
+                  "    pm.expect(json).to.have.property('data');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/credentials/{{credential_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "credentials", "{{credential_id}}"]
+            },
+            "description": "Получить одну запись по UUID.\n\nПеременная `credential_id` заполняется автоматически при создании записи."
+          },
+          "response": [
+            {
+              "name": "200 OK — запись найдена",
+              "originalRequest": {
+                "method": "GET",
+                "header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+                "url": {"raw": "{{base_url}}/api/credentials/{{credential_id}}", "host": ["{{base_url}}"], "path": ["api", "credentials", "{{credential_id}}"]}
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [{"key": "Content-Type", "value": "application/json"}],
+              "body": "{\n  \"id\": \"550e8400-e29b-41d4-a716-446655440000\",\n  \"user_id\": \"550e8400-e29b-41d4-a716-446655440001\",\n  \"type\": \"login_password\",\n  \"name\": \"GitHub\",\n  \"metadata\": \"github.com\",\n  \"data\": \"AQIDBA==\",\n  \"created_at\": \"2026-03-14T12:00:00Z\",\n  \"updated_at\": \"2026-03-14T12:00:00Z\"\n}"
+            },
+            {
+              "name": "400 Bad Request — неверный UUID",
+              "originalRequest": {
+                "method": "GET",
+                "header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+                "url": {"raw": "{{base_url}}/api/credentials/not-a-uuid", "host": ["{{base_url}}"], "path": ["api", "credentials", "not-a-uuid"]}
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": "text",
+              "header": [],
+              "body": "неверный формат ID\n"
+            },
+            {
+              "name": "401 Unauthorized — нет токена",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {"raw": "{{base_url}}/api/credentials/{{credential_id}}", "host": ["{{base_url}}"], "path": ["api", "credentials", "{{credential_id}}"]}
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "_postman_previewlanguage": "text",
+              "header": [],
+              "body": "требуется авторизация\n"
+            },
+            {
+              "name": "404 Not Found — запись не существует или чужая",
+              "originalRequest": {
+                "method": "GET",
+                "header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+                "url": {"raw": "{{base_url}}/api/credentials/00000000-0000-0000-0000-000000000000", "host": ["{{base_url}}"], "path": ["api", "credentials", "00000000-0000-0000-0000-000000000000"]}
+              },
+              "status": "Not Found",
+              "code": 404,
+              "_postman_previewlanguage": "text",
+              "header": [],
+              "body": "учётные данные не найдены\n"
+            }
+          ]
+        },
+        {
+          "name": "Обновить запись",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Статус 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Имя обновлено', function () {",
+                  "    var json = pm.response.json();",
+                  "    pm.expect(json.name).to.equal('GitHub (обновлено)');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"GitHub (обновлено)\",\n  \"metadata\": \"github.com — рабочий\",\n  \"data\": \"BQYHCA==\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/credentials/{{credential_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "credentials", "{{credential_id}}"]
+            },
+            "description": "Обновить существующую запись по UUID.\n\nМожно изменить `name`, `metadata` и `data`. Тип записи изменить нельзя."
+          },
+          "response": [
+            {
+              "name": "200 OK — запись обновлена",
+              "originalRequest": {
+                "method": "PUT",
+                "header": [
+                  {"key": "Authorization", "value": "Bearer {{token}}"},
+                  {"key": "Content-Type", "value": "application/json"}
+                ],
+                "body": {"mode": "raw", "raw": "{\n  \"name\": \"GitHub (обновлено)\",\n  \"metadata\": \"github.com — рабочий\",\n  \"data\": \"BQYHCA==\"\n}"},
+                "url": {"raw": "{{base_url}}/api/credentials/{{credential_id}}", "host": ["{{base_url}}"], "path": ["api", "credentials", "{{credential_id}}"]}
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [{"key": "Content-Type", "value": "application/json"}],
+              "body": "{\n  \"id\": \"550e8400-e29b-41d4-a716-446655440000\",\n  \"user_id\": \"550e8400-e29b-41d4-a716-446655440001\",\n  \"type\": \"login_password\",\n  \"name\": \"GitHub (обновлено)\",\n  \"metadata\": \"github.com — рабочий\",\n  \"data\": \"BQYHCA==\",\n  \"created_at\": \"2026-03-14T12:00:00Z\",\n  \"updated_at\": \"2026-03-14T14:00:00Z\"\n}"
+            },
+            {
+              "name": "400 Bad Request — невалидный JSON",
+              "originalRequest": {
+                "method": "PUT",
+                "header": [
+                  {"key": "Authorization", "value": "Bearer {{token}}"},
+                  {"key": "Content-Type", "value": "application/json"}
+                ],
+                "body": {"mode": "raw", "raw": "not json"},
+                "url": {"raw": "{{base_url}}/api/credentials/{{credential_id}}", "host": ["{{base_url}}"], "path": ["api", "credentials", "{{credential_id}}"]}
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": "text",
+              "header": [],
+              "body": "неверный формат запроса\n"
+            },
+            {
+              "name": "401 Unauthorized — нет токена",
+              "originalRequest": {
+                "method": "PUT",
+                "header": [{"key": "Content-Type", "value": "application/json"}],
+                "body": {"mode": "raw", "raw": "{\n  \"name\": \"test\",\n  \"data\": \"AQIDBA==\"\n}"},
+                "url": {"raw": "{{base_url}}/api/credentials/{{credential_id}}", "host": ["{{base_url}}"], "path": ["api", "credentials", "{{credential_id}}"]}
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "_postman_previewlanguage": "text",
+              "header": [],
+              "body": "требуется авторизация\n"
+            },
+            {
+              "name": "404 Not Found — запись не найдена",
+              "originalRequest": {
+                "method": "PUT",
+                "header": [
+                  {"key": "Authorization", "value": "Bearer {{token}}"},
+                  {"key": "Content-Type", "value": "application/json"}
+                ],
+                "body": {"mode": "raw", "raw": "{\n  \"name\": \"test\",\n  \"data\": \"AQIDBA==\"\n}"},
+                "url": {"raw": "{{base_url}}/api/credentials/00000000-0000-0000-0000-000000000000", "host": ["{{base_url}}"], "path": ["api", "credentials", "00000000-0000-0000-0000-000000000000"]}
+              },
+              "status": "Not Found",
+              "code": 404,
+              "_postman_previewlanguage": "text",
+              "header": [],
+              "body": "учётные данные не найдены\n"
+            }
+          ]
+        },
+        {
+          "name": "Удалить запись",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Статус 204 No Content', function () {",
+                  "    pm.response.to.have.status(204);",
+                  "});",
+                  "",
+                  "// Очищаем credential_id после удаления",
+                  "pm.collectionVariables.set('credential_id', '');"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/credentials/{{credential_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "credentials", "{{credential_id}}"]
+            },
+            "description": "Удалить запись по UUID. При успехе возвращает `204 No Content`.\n\nПосле выполнения переменная `credential_id` очищается."
+          },
+          "response": [
+            {
+              "name": "204 No Content — запись удалена",
+              "originalRequest": {
+                "method": "DELETE",
+                "header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+                "url": {"raw": "{{base_url}}/api/credentials/{{credential_id}}", "host": ["{{base_url}}"], "path": ["api", "credentials", "{{credential_id}}"]}
+              },
+              "status": "No Content",
+              "code": 204,
+              "_postman_previewlanguage": "text",
+              "header": [],
+              "body": ""
+            },
+            {
+              "name": "400 Bad Request — неверный UUID",
+              "originalRequest": {
+                "method": "DELETE",
+                "header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+                "url": {"raw": "{{base_url}}/api/credentials/not-a-uuid", "host": ["{{base_url}}"], "path": ["api", "credentials", "not-a-uuid"]}
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": "text",
+              "header": [],
+              "body": "неверный формат ID\n"
+            },
+            {
+              "name": "401 Unauthorized — нет токена",
+              "originalRequest": {
+                "method": "DELETE",
+                "header": [],
+                "url": {"raw": "{{base_url}}/api/credentials/{{credential_id}}", "host": ["{{base_url}}"], "path": ["api", "credentials", "{{credential_id}}"]}
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "_postman_previewlanguage": "text",
+              "header": [],
+              "body": "требуется авторизация\n"
+            },
+            {
+              "name": "404 Not Found — запись не найдена",
+              "originalRequest": {
+                "method": "DELETE",
+                "header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+                "url": {"raw": "{{base_url}}/api/credentials/00000000-0000-0000-0000-000000000000", "host": ["{{base_url}}"], "path": ["api", "credentials", "00000000-0000-0000-0000-000000000000"]}
+              },
+              "status": "Not Found",
+              "code": 404,
+              "_postman_previewlanguage": "text",
+              "header": [],
+              "body": "учётные данные не найдены\n"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,1 +1,254 @@
 # goph-keeper
+
+Менеджер паролей и учётных данных с архитектурой клиент-сервер.
+
+- **Сервер**: HTTP API на Go с хранилищем PostgreSQL, JWT-аутентификацией и опциональным TLS
+- **Клиент**: CLI-приложение для взаимодействия с сервером
+
+## Требования
+
+- **Go 1.26.1+** — язык разработки
+- **Docker и Docker Compose** — для запуска локальной базы данных PostgreSQL 16
+- **GNU Make** — для запуска команд из `Makefile`
+- **[golang-migrate](https://github.com/golang-migrate/migrate)** (`migrate`) — применение миграций базы данных
+- **[golangci-lint](https://golangci-lint.run/)** — статический анализ кода
+- **[swaggo/swag](https://github.com/swaggo/swag)** (`swag`) — генерация документации Swagger (опционально)
+
+## Быстрый старт
+
+```bash
+# Скопировать конфигурацию
+cp .env.example .env
+
+# Запустить PostgreSQL
+make docker-up
+
+# Применить миграции
+make migrate-up
+
+# Запустить сервер
+make run-server
+
+# В другом терминале — запустить клиент
+make run-client
+
+# Запустить клиент с командой
+make run-client ARGS="version"
+make run-client ARGS="add -h"
+```
+
+## Запуск
+
+```bash
+make run-server                    # Запустить сервер
+make run-client                    # Запустить клиент (интерактивно)
+make run-client ARGS="version"     # Передать команду клиенту
+make run-client ARGS="add -h"      # Передать команду с флагами
+make run-client version            # Краткая форма (trailing target)
+```
+
+> Для передачи аргументов используйте переменную `ARGS` или просто допишите
+> команду после цели (trailing targets). Аналогично для `run-server ARGS="..."`.
+
+## Сборка
+
+```bash
+make build           # Собрать сервер и клиент в bin/
+make build-server    # bin/goph-keeper-server
+make build-client    # bin/goph-keeper
+make build-all       # Кросс-платформенная сборка (Linux, macOS, Windows)
+```
+
+## Тесты и линтер
+
+```bash
+make test            # Запустить все тесты
+make test-cover      # Тесты с отчётом о покрытии (coverage.out)
+make lint            # Запустить golangci-lint
+```
+
+## Переменные окружения
+
+Скопируйте `.env.example` в `.env`. Загрузчик конфигурации ищет `.env` вверх по дереву директорий.
+
+### Сервер
+
+| Переменная     | По умолчанию | Описание                                      |
+| -------------- | ------------ | --------------------------------------------- |
+| `LISTEN_ADDR`  | `:8080`      | TCP-адрес для прослушивания                   |
+| `DATABASE_DSN` | —            | Строка подключения к PostgreSQL (обязательно) |
+| `JWT_SECRET`   | —            | HMAC-секрет для JWT-токенов (обязательно)     |
+| `TLS_CERT`     | —            | Путь к TLS-сертификату (необязательно)        |
+| `TLS_KEY`      | —            | Путь к TLS-ключу (необязательно)              |
+
+### Клиент
+
+| Переменная              | По умолчанию            | Описание                                  |
+| ----------------------- | ----------------------- | ----------------------------------------- |
+| `SERVER_ADDRESS`        | `http://localhost:8080` | Базовый URL сервера                       |
+| `TLS_INSECURE`          | `false`                 | Отключить проверку TLS-сертификата        |
+| `GOPHKEEPER_CONFIG_DIR` | `~/.gophkeeper`         | Директория для хранения состояния клиента |
+
+## Примеры использования клиента
+
+### Аутентификация
+
+```bash
+# Регистрация нового пользователя
+make run-client ARGS="register --login=user@example.com --password=secret"
+
+# Вход (токен сохраняется автоматически)
+make run-client ARGS="login --login=user@example.com --password=secret"
+```
+
+### Управление записями
+
+```bash
+# Показать все записи
+make run-client ARGS="list"
+
+# Показать записи определённого типа
+make run-client ARGS="list --type=login_password"
+```
+
+### Добавление записей
+
+```bash
+# Логин/пароль
+make run-client ARGS="add --type=login_password --name=GitHub --username=user --password=secret"
+
+# Произвольный текст (заметка)
+make run-client ARGS="add --type=text --name=Заметка --text='секретный текст' --password=secret"
+
+# Бинарный файл
+make run-client ARGS="add --type=binary --name=SSH-ключ --file=/home/user/.ssh/id_rsa --password=secret"
+
+# Банковская карта
+make run-client ARGS="add --type=bank_card --name=Visa --number=4111111111111111 --expiry=12/26 --cvv=123 --holder=Ivan --password=secret"
+```
+
+> `--password` в командах `add`/`get`/`update` — это мастер-пароль для **шифрования данных** на стороне клиента, не пароль от аккаунта.
+
+### Просмотр и редактирование
+
+```bash
+# Получить запись (без расшифровки)
+make run-client ARGS="get --id=<UUID>"
+
+# Получить запись с расшифровкой содержимого
+make run-client ARGS="get --id=<UUID> --password=secret"
+
+# Обновить запись (только переданные поля изменятся)
+make run-client ARGS="update --id=<UUID> --password=secret --username=user2"
+make run-client ARGS="update --id=<UUID> --password=secret --name=НовоеИмя"
+
+# Удалить запись
+make run-client ARGS="delete --id=<UUID>"
+```
+
+## База данных
+
+```bash
+make docker-up   # Запустить контейнер PostgreSQL 16 (порт 5432)
+make docker-down # Остановить и удалить контейнеры
+```
+
+Миграции требуют явной передачи строки подключения:
+
+```bash
+make migrate-up   DATABASE_DSN="postgres://user:pass@localhost:5432/dbname?sslmode=disable"
+make migrate-down DATABASE_DSN="postgres://user:pass@localhost:5432/dbname?sslmode=disable"
+```
+
+## Очистка
+
+```bash
+make clean           # Удалить bin/ и coverage.out
+```
+
+## Документация API
+
+После запуска сервера Swagger UI доступен по адресу:
+
+```
+http://localhost:8080/swagger/index.html
+```
+
+> Перед открытием выполните `make swag` для генерации документации, затем перезапустите сервер.
+
+## Postman-коллекция
+
+Файл `goph-keeper.postman_collection.json` содержит готовые запросы для ручного тестирования API.
+
+**Импорт:** Postman → Import → выбрать файл коллекции.
+
+**Переменные коллекции:**
+
+| Переменная      | Описание                                                  |
+| --------------- | --------------------------------------------------------- |
+| `base_url`      | Базовый URL сервера (по умолчанию `http://localhost:8080`) |
+| `token`         | JWT-токен, сохраняется автоматически после входа/регистрации |
+| `credential_id` | UUID последней созданной записи, сохраняется автоматически |
+
+**Состав коллекции:**
+
+- **Аутентификация**
+  - `POST /api/register` — регистрация нового пользователя
+  - `POST /api/login` — вход существующего пользователя
+- **Учётные данные** (все запросы требуют токен)
+  - `GET /api/credentials` — список всех записей
+  - `POST /api/credentials` — создать запись (типы: `login_password`, `text`, `binary`, `bank_card`)
+  - `GET /api/credentials/{id}` — получить запись по UUID
+  - `PUT /api/credentials/{id}` — обновить запись
+  - `DELETE /api/credentials/{id}` — удалить запись
+
+**Порядок работы:**
+1. Запустить сервер: `make run-server`
+2. Выполнить «Регистрация» или «Вход» — токен сохранится в переменную `token`
+3. Выполнять запросы к учётным данным
+
+> Поле `data` содержит зашифрованный blob в кодировке base64. Клиент шифрует данные перед отправкой (AES-256-GCM), сервер хранит непрозрачный blob без расшифровки.
+
+## Безопасность
+
+### Ограничение размера тела запроса
+
+Все входящие HTTP-запросы обрабатываются через middleware `MaxBodySize`, который ограничивает размер тела запроса **1 МБ** (`http.MaxBytesReader`). Это защищает сервер от атак типа OOM (исчерпание памяти) при отправке гигантских тел запроса.
+
+Middleware применяется глобально в `internal/server/app/app.go` и распространяется на все маршруты, включая `/api/register`, `/api/login` и все маршруты учётных данных.
+
+При превышении лимита `io.ReadAll` / `json.Decoder` возвращают ошибку типа `*http.MaxBytesError` — обработчики отвечают клиенту статусом `400 Bad Request` как на любую другую ошибку декодирования.
+
+### Middleware сервера
+
+| Middleware    | Назначение                                               |
+| ------------- | -------------------------------------------------------- |
+| `Recoverer`   | Перехват паник, возврат `500` вместо краша               |
+| `Logger`      | Логирование каждого запроса (метод, путь, статус, время) |
+| `MaxBodySize` | Ограничение тела запроса 1 МБ (защита от OOM)            |
+| `Auth`        | Проверка JWT-токена, извлечение `userID` в контекст      |
+
+## Архитектура
+
+```
+cmd/
+  server/main.go      # Точка входа сервера
+  client/main.go      # Точка входа клиента
+
+internal/
+  server/
+    handler/          # HTTP-обработчики
+    middleware/       # HTTP-мидлвары (аутентификация, логирование, ограничение тела и т.д.)
+    service/          # Бизнес-логика
+    repository/       # Доступ к данным (PostgreSQL)
+    model/            # Модели данных сервера
+    app/              # Инициализация приложения
+    config/           # Конфигурация
+  client/
+    cmd/              # Определения команд Cobra
+    api/              # HTTP-клиент для общения с сервером
+    app/              # Логика клиентского приложения
+    crypto/           # Криптографические операции
+    config/           # Конфигурация
+  model/              # Общие модели (сервер + клиент)
+```

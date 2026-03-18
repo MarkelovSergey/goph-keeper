@@ -1,0 +1,124 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        // ── Запуск без отладки ─────────────────────────────────────────
+        {
+            "name": "Run Server",
+            "type": "go",
+            "request": "launch",
+            "mode": "debug",
+            "program": "${workspaceFolder}/cmd/server/main.go",
+        },
+        // ── Отладка клиента: отдельные команды ────────────────────────
+        {
+            "name": "Debug Client: register",
+            "type": "go",
+            "request": "launch",
+            "mode": "debug",
+            "program": "${workspaceFolder}/cmd/client/main.go",
+            "args": [
+                "register",
+                "--login", "testuser",
+                "--password", "secret123"
+            ]
+        },
+        {
+            "name": "Debug Client: login",
+            "type": "go",
+            "request": "launch",
+            "mode": "debug",
+            "program": "${workspaceFolder}/cmd/client/main.go",
+            "args": [
+                "login",
+                "--login", "testuser",
+                "--password", "secret123"
+            ]
+        },
+        {
+            // Мастер-пароль запрашивается интерактивно — запускать через терминал, не через debugger
+            "name": "Debug Client: add (login_password)",
+            "type": "go",
+            "request": "launch",
+            "mode": "debug",
+            "program": "${workspaceFolder}/cmd/client/main.go",
+            "args": [
+                "add",
+                "--type", "login_password",
+                "--name", "my-site",
+                "--username", "admin",
+                "--meta", "site.ru",
+            ]
+        },
+        {
+            // Мастер-пароль запрашивается интерактивно — запускать через терминал, не через debugger
+            "name": "Debug Client: add (text)",
+            "type": "go",
+            "request": "launch",
+            "mode": "debug",
+            "program": "${workspaceFolder}/cmd/client/main.go",
+            "args": [
+                "add",
+                "--type", "text",
+                "--name", "my-note",
+                "--text", "secret note content",
+                "--meta", "personal",
+            ]
+        },
+        {
+            "name": "Debug Client: list",
+            "type": "go",
+            "request": "launch",
+            "mode": "debug",
+            "program": "${workspaceFolder}/cmd/client/main.go",
+            "args": ["list"]
+        },
+        {
+            // Мастер-пароль запрашивается интерактивно — запускать через терминал, не через debugger
+            "name": "Debug Client: get",
+            "type": "go",
+            "request": "launch",
+            "mode": "debug",
+            "program": "${workspaceFolder}/cmd/client/main.go",
+            "args": [
+                "get",
+                "--id", "16f5bdf1-f017-4116-901b-e5058e6ee48f", // Заменить на актуальный
+                "--decrypt"
+            ]
+        },
+        {
+            // Мастер-пароль запрашивается интерактивно — запускать через терминал, не через debugger
+            "name": "Debug Client: update",
+            "type": "go",
+            "request": "launch",
+            "mode": "debug",
+            "program": "${workspaceFolder}/cmd/client/main.go",
+            "args": [
+                "update",
+                "--id", "16f5bdf1-f017-4116-901b-e5058e6ee48f", // Заменить на актуальный
+                "--name", "my-site-updated"
+            ]
+        },
+        {
+            "name": "Debug Client: delete",
+            "type": "go",
+            "request": "launch",
+            "mode": "debug",
+            "program": "${workspaceFolder}/cmd/client/main.go",
+            "args": [
+                "delete",
+                "--id", "16f5bdf1-f017-4116-901b-e5058e6ee48f" // Заменить на актуальный
+            ]
+        },
+        {
+            "name": "Debug Client: version",
+            "type": "go",
+            "request": "launch",
+            "mode": "debug",
+            "program": "${workspaceFolder}/cmd/client/main.go",
+            "args": ["version"]
+        }
+    ]
+}

@@ -1,0 +1,74 @@
+BINARY_SERVER=goph-keeper-server
+BINARY_CLIENT=goph-keeper
+
+MODULE=github.com/MarkelovSergey/goph-keeper
+VERSION=0.0.1
+BUILD_DATE=$(shell date -u +"%Y-%m-%dT%H:%M:%SZ")
+LD_FLAGS=-ldflags "-X main.version=$(VERSION) -X main.buildDate=$(BUILD_DATE)"
+
+.PHONY: all build build-server build-client test lint migrate-up migrate-down swag run-server run-client docker-up docker-down clean
+
+all: build
+
+## Build
+build: build-server build-client
+
+build-server:
+	go build $(LD_FLAGS) -o bin/$(BINARY_SERVER) ./cmd/server/
+
+build-client:
+	go build $(LD_FLAGS) -o bin/$(BINARY_CLIENT) ./cmd/client/
+
+## Cross-platform builds
+build-all:
+	GOOS=linux   GOARCH=amd64 go build $(LD_FLAGS) -o bin/$(BINARY_CLIENT)-linux-amd64 ./cmd/client/
+	GOOS=darwin  GOARCH=amd64 go build $(LD_FLAGS) -o bin/$(BINARY_CLIENT)-darwin-amd64 ./cmd/client/
+	GOOS=windows GOARCH=amd64 go build $(LD_FLAGS) -o bin/$(BINARY_CLIENT)-windows-amd64.exe ./cmd/client/
+
+## Test
+test:
+	go test ./... -count=1
+
+test-cover:
+	go test ./... -count=1 -coverprofile=coverage.out
+	go tool cover -func=coverage.out
+
+## Lint
+lint:
+	$(shell go env GOPATH)/bin/golangci-lint run ./...
+
+migrate-up:
+	$(shell go env GOPATH)/bin/migrate -path migrations -database "$(DATABASE_DSN)" up
+
+migrate-down:
+	$(shell go env GOPATH)/bin/migrate -path migrations -database "$(DATABASE_DSN)" down
+
+## Swagger
+swag:
+	$(shell go env GOPATH)/bin/swag init -g cmd/server/main.go -o docs/
+
+## Run
+# Pass extra arguments: make run-server ARGS="..."
+run-server:
+	go run $(LD_FLAGS) ./cmd/server/ $(ARGS)
+
+# Pass extra arguments: make run-client ARGS="version"
+# Or automatically capture trailing targets: make run-client version
+ifeq (run-client,$(firstword $(MAKECMDGOALS)))
+  RUN_CLIENT_ARGS := $(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))
+  $(eval $(RUN_CLIENT_ARGS):;@:)
+endif
+
+run-client:
+	go run $(LD_FLAGS) ./cmd/client/ $(RUN_CLIENT_ARGS) $(ARGS)
+
+## Docker
+docker-up:
+	docker compose up -d
+
+docker-down:
+	docker compose down
+
+## Clean
+clean:
+	rm -rf bin/ coverage.out
